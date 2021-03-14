@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.blueGrey,
         // This makes the visual density adapt to the platform that you run
         // the app on. For desktop platforms, the controls will be smaller and
         // closer together (more dense) than on mobile platforms.
@@ -36,6 +36,60 @@ class MyHomePage extends StatefulWidget {
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
+}
+
+class Protein {
+  Protein(this.name, this.key);
+  String name;
+  GlobalKey key;
+}
+
+List<String> mapk = ["Tyrosine Kinase", "SHP2/SOS", "KRAS/HRAS/NRAS"];
+List<Protein> mapkProteins = mapk.map((e) => Protein(e, GlobalKey())).toList();
+
+class ProfileCardPainter extends CustomPainter {
+  //2
+  ProfileCardPainter({@required this.color});
+
+  //3
+  final Color color;
+
+  //4
+  @override
+  void paint(Canvas canvas, Size size) {
+    //1
+    List<Offset> points = [];
+    mapkProteins.asMap().forEach((key, value) {
+      GlobalKey gkey = value.key;
+      final b = (gkey.currentContext.findRenderObject() as RenderBox)
+          .getTransformTo(gkey.currentContext.findRenderObject().parent)
+          .getTranslation();
+      final d = (gkey.currentContext.findRenderObject() as RenderBox).size;
+      var hOffset = 0.0;
+      if (key.isEven) {
+        hOffset = d.height;
+      }
+      Offset box = Offset(b.x + (d.width / 2), b.y + hOffset);
+      //localToGlobal(Offset.zero);
+      points.add(box);
+      print(box);
+    });
+    points.asMap().forEach((n, point) {
+      if (n > 0 && n < points.length) {
+        final p1 = point;
+        final p2 = points[n - 1];
+        final paint = Paint()
+          ..color = Colors.pink
+          ..strokeWidth = 4;
+        canvas.drawLine(p1, p2, paint);
+      }
+    });
+  }
+
+  @override
+  bool shouldRepaint(ProfileCardPainter oldDelegate) {
+    return color != oldDelegate.color;
+  }
 }
 
 class _MyHomePageState extends State<MyHomePage> {
@@ -102,6 +156,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Widget> drawerItems = [];
 
+  List<Widget> enzymes() {
+    List<Widget> a = [];
+    double y = 0;
+    mapkProteins.asMap().forEach((key, value) {
+      y = y + 100;
+      a.add(Positioned(
+        left: 100,
+        top: y,
+        child: Container(
+          key: value.key,
+          padding: EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            color: Colors.lightBlue,
+          ),
+          child: Text(value.name),
+        ),
+      ));
+    });
+    return a;
+  }
+
   updateDrawer() {
     var listRef = storage.ref().child('/');
     drawerItems = [];
@@ -142,31 +218,77 @@ class _MyHomePageState extends State<MyHomePage> {
           children: drawerItems,
         ),
       ),
-      body: _loading
-          ? Container(
-              child: SpinKitFoldingCube(
-                color: Colors.lightBlue,
-              ),
-            )
-          : Listener(
-              onPointerSignal: (pointerSignal) {
-                if (pointerSignal is PointerScrollEvent) {
-                  // do something when scrolled
-                  print(pointerSignal.scrollDelta);
-                  final newScale = controller.scale *
-                      (pointerSignal.scrollDelta.direction * 0.2 + 1);
-                  if (newScale > 0.1 && newScale < 10) {
-                    controller.scale = newScale;
-                  }
-                }
-              },
-              child: PhotoView(
-                controller: controller,
-                maxScale: 10,
-                minScale: 0.1,
-                imageProvider: _image.image,
-              ),
-            ),
+      body: Center(
+        child: InteractiveViewer(
+          panEnabled: true, // Set it to false to prevent panning.
+          boundaryMargin: EdgeInsets.all(80),
+          minScale: 0.5,
+          maxScale: 4,
+          child: Container(
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black, width: 5)),
+              child: Stack(
+                children: [
+                  CustomPaint(
+                    size: Size.infinite,
+                    painter: ProfileCardPainter(color: Colors.orange),
+                  ),
+                  ...enzymes(),
+                  // Positioned(
+                  //   left: 400,
+                  //   child: Container(
+                  //     child: PopupMenuButton<String>(
+                  //       itemBuilder: (context) => [PopupMenuItem(child: Text('a'))],
+                  //     ),
+                  //     width: 100,
+                  //     height: 100,
+                  //     color: Colors.red,
+                  //   ),
+                  // ),
+                ],
+              )),
+        ),
+      ),
+
+      // _loading
+      //     ? Container(
+      //         child: SpinKitFoldingCube(
+      //           color: Colors.lightBlue,
+      //         ),
+      //       )
+      //     : Center(
+      //         child: InteractiveViewer(
+      //           panEnabled: true, // Set it to false to prevent panning.
+      //           boundaryMargin: EdgeInsets.all(80),
+      //           minScale: 0.5,
+      //           maxScale: 4,
+      //           child: Container(
+      //               width: _image.width,
+      //               height: _image.height,
+      //               child: Stack(
+      //                 children: [
+      //                   //_image,
+      //                   CustomPaint(
+      //                     size: Size.infinite,
+      //                     painter: ProfileCardPainter(color: Colors.orange),
+      //                   ),
+      //                   ...enzymes(),
+      //                   Positioned(
+      //                     left: 400,
+      //                     child: Container(
+      //                       child: PopupMenuButton<String>(
+      //                         itemBuilder: (context) =>
+      //                             [PopupMenuItem(child: Text('a'))],
+      //                       ),
+      //                       width: 100,
+      //                       height: 100,
+      //                       color: Colors.red,
+      //                     ),
+      //                   ),
+      //                 ],
+      //               )),
+      //         ),
+      //       ),
 
       floatingActionButton: FloatingActionButton(
         onPressed: () => {listDocs()},
