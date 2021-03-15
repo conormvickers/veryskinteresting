@@ -44,45 +44,49 @@ class Protein {
   GlobalKey key;
 }
 
-List<String> mapk = ["Tyrosine Kinase", "SHP2/SOS", "KRAS/HRAS/NRAS"];
+List<String> mapk = [
+  "Tyrosine Kinase",
+  "SHP2/SOS",
+  "RAS:KRAS/HRAS/NRAS",
+  "BRAF",
+  "MEK",
+  "ERK",
+  "Cyclins"
+];
+List<String> gprot = ["G-Protein Coupled Receptor", "GNAQ", "+RAS"];
 List<Protein> mapkProteins = mapk.map((e) => Protein(e, GlobalKey())).toList();
+List<List<Protein>> allProteins = [[]];
 
 class ProfileCardPainter extends CustomPainter {
-  //2
   ProfileCardPainter({@required this.color});
-
-  //3
   final Color color;
-
-  //4
   @override
   void paint(Canvas canvas, Size size) {
-    //1
-    List<Offset> points = [];
-    mapkProteins.asMap().forEach((key, value) {
-      GlobalKey gkey = value.key;
-      final b = (gkey.currentContext.findRenderObject() as RenderBox)
-          .getTransformTo(gkey.currentContext.findRenderObject().parent)
-          .getTranslation();
-      final d = (gkey.currentContext.findRenderObject() as RenderBox).size;
-      var hOffset = 0.0;
-      if (key.isEven) {
-        hOffset = d.height;
-      }
-      Offset box = Offset(b.x + (d.width / 2), b.y + hOffset);
-      //localToGlobal(Offset.zero);
-      points.add(box);
-      print(box);
-    });
-    points.asMap().forEach((n, point) {
-      if (n > 0 && n < points.length) {
-        final p1 = point;
-        final p2 = points[n - 1];
-        final paint = Paint()
-          ..color = Colors.pink
-          ..strokeWidth = 4;
-        canvas.drawLine(p1, p2, paint);
-      }
+    allProteins.asMap().forEach((numberOfPath, pathway) {
+      List<Offset> points = [];
+      pathway.asMap().forEach((key, value) {
+        GlobalKey gkey = value.key;
+        final b = (gkey.currentContext.findRenderObject() as RenderBox)
+            .getTransformTo(gkey.currentContext.findRenderObject().parent)
+            .getTranslation();
+        final d = (gkey.currentContext.findRenderObject() as RenderBox).size;
+        var hOffset = 0.0;
+        if (key.isEven) {
+          hOffset = d.height;
+        }
+        Offset box = Offset(b.x + (d.width / 2), b.y + hOffset);
+        points.add(box);
+      });
+      points.asMap().forEach((n, point) {
+        if (n > 0 && n < points.length) {
+          final p1 = point;
+          final p2 = points[n - 1];
+          final paint = Paint()
+            ..color = Colors.pink
+            ..strokeWidth = 4;
+          canvas.drawLine(p1, p2, paint);
+        }
+      });
     });
   }
 
@@ -99,7 +103,10 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     initImage();
     updateDrawer();
-    controller = PhotoViewController()..outputStateStream.listen(listener);
+    List<List<String>> strings = [gprot, mapk];
+    allProteins = strings
+        .map((e) => e.map((e) => Protein(e, GlobalKey())).toList())
+        .toList();
   }
 
   void listener(PhotoViewControllerValue value) {
@@ -158,22 +165,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Widget> enzymes() {
     List<Widget> a = [];
-    double y = 0;
-    mapkProteins.asMap().forEach((key, value) {
-      y = y + 100;
-      a.add(Positioned(
-        left: 100,
-        top: y,
-        child: Container(
-          key: value.key,
-          padding: EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            color: Colors.lightBlue,
+    double x = 0;
+    allProteins.asMap().forEach((num, pathway) {
+      x = x + 200;
+      double y = 0;
+      pathway.asMap().forEach((key, value) {
+        y = y + 100;
+        a.add(Positioned(
+          left: 100 + x,
+          top: y,
+          child: Container(
+            key: value.key,
+            padding: EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              color: Colors.lightBlue,
+            ),
+            child: Text(value.name),
           ),
-          child: Text(value.name),
-        ),
-      ));
+        ));
+      });
     });
     return a;
   }
@@ -222,30 +233,28 @@ class _MyHomePageState extends State<MyHomePage> {
         child: InteractiveViewer(
           panEnabled: true, // Set it to false to prevent panning.
           boundaryMargin: EdgeInsets.all(80),
+          constrained: true,
           minScale: 0.5,
           maxScale: 4,
+
           child: Container(
+              // height: 100,
+              // width: 100,
               decoration: BoxDecoration(
                   border: Border.all(color: Colors.black, width: 5)),
-              child: Stack(
-                children: [
-                  CustomPaint(
-                    size: Size.infinite,
-                    painter: ProfileCardPainter(color: Colors.orange),
-                  ),
-                  ...enzymes(),
-                  // Positioned(
-                  //   left: 400,
-                  //   child: Container(
-                  //     child: PopupMenuButton<String>(
-                  //       itemBuilder: (context) => [PopupMenuItem(child: Text('a'))],
-                  //     ),
-                  //     width: 100,
-                  //     height: 100,
-                  //     color: Colors.red,
-                  //   ),
-                  // ),
-                ],
+              child: FittedBox(
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 1000,
+                      height: 1000,
+                    ),
+                    CustomPaint(
+                      painter: ProfileCardPainter(color: Colors.orange),
+                    ),
+                    ...enzymes(),
+                  ],
+                ),
               )),
         ),
       ),
