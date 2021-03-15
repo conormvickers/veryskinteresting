@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blueGrey,
+        primarySwatch: Colors.indigo,
         // This makes the visual density adapt to the platform that you run
         // the app on. For desktop platforms, the controls will be smaller and
         // closer together (more dense) than on mobile platforms.
@@ -87,6 +87,12 @@ class ProfileCardPainter extends CustomPainter {
           canvas.drawLine(p1, p2, paint);
         }
       });
+      final p1 = Offset(0, 0);
+      final p2 = Offset(500, 500);
+      final paint = Paint()
+        ..color = Colors.pink
+        ..strokeWidth = 4;
+      canvas.drawLine(p1, p2, paint);
     });
   }
 
@@ -184,6 +190,16 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Text(value.name),
           ),
         ));
+        if (key < pathway.length - 1) {
+          a.add(Positioned(
+            left: 100 + x,
+            top: y + 50,
+            child: Icon(
+              Icons.arrow_downward_outlined,
+              color: Colors.green,
+            ),
+          ));
+        }
       });
     });
     return a;
@@ -246,13 +262,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Stack(
                   children: [
                     Container(
+                      color: Colors.blue.withAlpha(50),
                       width: 1000,
                       height: 1000,
                     ),
-                    CustomPaint(
-                      painter: ProfileCardPainter(color: Colors.orange),
-                    ),
                     ...enzymes(),
+                    // CustomPaint(
+                    //   size: Size(1000, 1000),
+                    //   painter: ProfileCardPainter(color: Colors.orange),
+                    // ),
                   ],
                 ),
               )),
