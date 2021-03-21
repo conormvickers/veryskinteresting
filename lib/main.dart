@@ -49,9 +49,10 @@ class Disease {
 Disease noonan = Disease("Noonan Syndrome", "SHP2 SOS", "Noonan syndrome: lower extremity lymphedema, "
     "CALM, multiple nevi, light/curly/rough hair, hypertelorism, ulerythema ophryogenes, webbed neck, "
     "lowered nuchal hairline, and low set ears (note: allelic with LEOPARD syndrome – both have pulmonic stenosis)",  );
-Disease costello = Disease("Costello", "RAS" , "AD, one of the RASopathies; mutations in HRAS (85%) > "
+Disease costello = Disease("HRAS: Spitz + Costello\nNRAS: Congenital Nevi", "RAS" , "AD, one of the RASopathies; mutations in HRAS (85%) > "
     "KRAS (10%–15%). Lax skin on hands and feet, coarse facies, low-set ears, deep palmoplantar creases, "
     "periorificial papillomas, acanthosis nigricans, and curly hair");
+Disease gorlin = Disease("Gorlin", "PTCH", "Basal cell syndrome");
 
 class Drug {
   Drug(this.name, this.gene, this.info);
@@ -70,6 +71,7 @@ class Protein {
 
 List<String> mapk = [
   "Tyrosine Kinase",
+  "PTPNII",
   "SHP2 SOS",
   "RAS:KRAS/HRAS/NRAS",
   "BRAF",
@@ -78,9 +80,19 @@ List<String> mapk = [
   "Cyclins,n"
 ];
 
-List<String> gprot = ["G-Protein CP:QNAQ/QNAS"];
+List<String> mtorpath = [
+  "Tyrosine Kinase",
+  "PI3K",
+  "AKT",
+  "mtor"
+];
 
-List<String> stopras = ["-Neurofibromin"];
+List<String> gprot = ["G-Protein CP:QNAQ/QNAS", "Adenylate Cyclase", "cAMP", "PKA"];
+
+List<String> ptchpath = ["SMO", "GLI"];
+
+List<String> ptch = ["-SMO", "PTCH"];
+List<String> stopras = ["-RAS" , "Neurofibromin", "-BRAF" , "Spred1"];
 
 List<Protein> mapkProteins = mapk.map((e) => Protein(e, GlobalKey())).toList();
 
@@ -88,50 +100,50 @@ List<Protein> mapkProteins = mapk.map((e) => Protein(e, GlobalKey())).toList();
 List<List<Protein>> allProteins = [[]];
 List<Disease> allDiseases = [];
 
-class ProfileCardPainter extends CustomPainter {
-  ProfileCardPainter({@required this.color});
-  final Color color;
-  @override
-  void paint(Canvas canvas, Size size) {
-    allProteins.asMap().forEach((numberOfPath, pathway) {
-      List<Offset> points = [];
-      pathway.asMap().forEach((key, value) {
-        GlobalKey gkey = value.key;
-        final b = (gkey.currentContext.findRenderObject() as RenderBox)
-            .getTransformTo(gkey.currentContext.findRenderObject().parent)
-            .getTranslation();
-        final d = (gkey.currentContext.findRenderObject() as RenderBox).size;
-        var hOffset = 0.0;
-        if (key.isEven) {
-          hOffset = d.height;
-        }
-        Offset box = Offset(b.x + (d.width / 2), b.y + hOffset);
-        points.add(box);
-      });
-      points.asMap().forEach((n, point) {
-        if (n > 0 && n < points.length) {
-          final p1 = point;
-          final p2 = points[n - 1];
-          final paint = Paint()
-            ..color = Colors.pink
-            ..strokeWidth = 4;
-          canvas.drawLine(p1, p2, paint);
-        }
-      });
-      final p1 = Offset(0, 0);
-      final p2 = Offset(500, 500);
-      final paint = Paint()
-        ..color = Colors.pink
-        ..strokeWidth = 4;
-      canvas.drawLine(p1, p2, paint);
-    });
-  }
-
-  @override
-  bool shouldRepaint(ProfileCardPainter oldDelegate) {
-    return color != oldDelegate.color;
-  }
-}
+// class ProfileCardPainter extends CustomPainter {
+//   ProfileCardPainter({@required this.color});
+//   final Color color;
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     allProteins.asMap().forEach((numberOfPath, pathway) {
+//       List<Offset> points = [];
+//       pathway.asMap().forEach((key, value) {
+//         GlobalKey gkey = value.key;
+//         final b = (gkey.currentContext.findRenderObject() as RenderBox)
+//             .getTransformTo(gkey.currentContext.findRenderObject().parent)
+//             .getTranslation();
+//         final d = (gkey.currentContext.findRenderObject() as RenderBox).size;
+//         var hOffset = 0.0;
+//         if (key.isEven) {
+//           hOffset = d.height;
+//         }
+//         Offset box = Offset(b.x + (d.width / 2), b.y + hOffset);
+//         points.add(box);
+//       });
+//       points.asMap().forEach((n, point) {
+//         if (n > 0 && n < points.length) {
+//           final p1 = point;
+//           final p2 = points[n - 1];
+//           final paint = Paint()
+//             ..color = Colors.pink
+//             ..strokeWidth = 4;
+//           canvas.drawLine(p1, p2, paint);
+//         }
+//       });
+//       final p1 = Offset(0, 0);
+//       final p2 = Offset(500, 500);
+//       final paint = Paint()
+//         ..color = Colors.pink
+//         ..strokeWidth = 4;
+//       canvas.drawLine(p1, p2, paint);
+//     });
+//   }
+//
+//   @override
+//   bool shouldRepaint(ProfileCardPainter oldDelegate) {
+//     return color != oldDelegate.color;
+//   }
+// }
 
 class _MyHomePageState extends State<MyHomePage> {
   @override
@@ -139,12 +151,12 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     initImage();
     updateDrawer();
-    List<List<String>> strings = [gprot, mapk, stopras];         //TODO: add all pathways
+    List<List<String>> strings = [gprot, mapk, stopras, mtorpath, ptchpath, ptch];         //TODO: add all pathways
     allProteins = strings
         .map((e) => e.map((e) => Protein(e, GlobalKey())).toList())
         .toList();
 
-     allDiseases = [noonan, costello];
+     allDiseases = [noonan, costello, gorlin];
 
   }
 
@@ -334,13 +346,69 @@ class _MyHomePageState extends State<MyHomePage> {
     allProteins.asMap().forEach((num, pathway) {
       if (pathway[0].name.substring(0,1) == '-') {
         List<Widget> colStuff = [];
-        pathway.asMap().forEach((key, value) {
-          colStuff.add(
-            Container(height: 500,),);
-          colStuff.add(Container(width: 100, height: 100, color: Colors.red,)
-          );
+        List<double> spacers = [];
+        int spacerIndex = 0;
+        pathway.asMap().forEach((number, value) {
+          if (number.isEven || number == 0) {
+            allProteins[num - 1].asMap().forEach((key, value) {
+              if (value.name.toUpperCase().contains(pathway[0].name.substring(1))) {
+                spacers.add( key.toDouble() );
+              }
+            });
+
+            if (spacers.length > 0) {
+              double space = spacers[spacerIndex];
+
+              if (spacers.length > 1) {
+                space = spacers[spacerIndex] - spacers[spacerIndex - 1];
+              }
+              colStuff.add(Container(height: (space * 70) + (spacerIndex * 30)));
+              spacerIndex++;
+            }
+
+            String name = 'No name';
+            String info = 'No info';
+            Widget diseaseState = Container();
+            allDiseases.asMap().forEach((n, disease) {
+              if (pathway[number + 1].name.toUpperCase().contains( disease.gene.toUpperCase() ) ) {
+                print(disease.name + "|||||||" + value.name);
+                name = disease.name;
+                info = disease.info;
+                diseaseState = GestureDetector(
+                  onTap: () => {
+                    _showDialog(context, name, info)
+                  },
+                  child: Container(
+
+
+                      child: Text(name),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        color: Colors.orange,
+                      )),
+                );
+              }
+            });
+            colStuff.add(Row(
+              children: [
+                Icon(Icons.arrow_left, color: Colors.red,),
+                Icon(Icons.stop_circle_outlined, color: Colors.red),
+                Container(
+                  padding: EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    color: Colors.red,
+                  ),
+                  child: Text(pathway[number + 1].name), ),
+                diseaseState
+              ],
+            ) );
+
+          }
         });
         Column col = Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: colStuff,
         );
         a.add(col);
@@ -365,7 +433,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Text(name),
               decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
-              color: Colors.red,
+              color: Colors.orange,
               )),
                 );
               }
@@ -423,6 +491,8 @@ class _MyHomePageState extends State<MyHomePage> {
         
         });
         Column col = Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: colStuff,
         );
         a.add(col);
@@ -485,7 +555,7 @@ class _MyHomePageState extends State<MyHomePage> {
               // height: 100,
               // width: 100,
               decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blue, width: 5),
+                  border: Border.all(color: Colors.pink, width: 5),
                 borderRadius: BorderRadius.circular(40)
               ),
               
@@ -493,7 +563,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Stack(
                   children: [
                     Container(
-                      color: Colors.blue.withAlpha(50),
+                      color: Colors.pinkAccent.withAlpha(50),
                       width: 1000,
                       height: 1000,
                     ),
@@ -509,7 +579,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             child: Container(
                               child: nuclear(),
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.purple, width: 5),
+                                border: Border.all(color: Colors.deepPurple, width: 5),
                                 borderRadius: BorderRadius.circular(40)
                             ),),
                           ))
