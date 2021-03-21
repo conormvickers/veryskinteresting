@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:transparent_image/transparent_image.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 
 void main() {
   runApp(MyApp());
@@ -38,6 +39,29 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+class Disease {
+  Disease(this.name, this.gene, this.info, [this.activating]);
+  String name;
+  String gene;
+  String info;
+  bool activating;
+}
+Disease noonan = Disease("Noonan Syndrome", "SHP2 SOS", "Noonan syndrome: lower extremity lymphedema, "
+    "CALM, multiple nevi, light/curly/rough hair, hypertelorism, ulerythema ophryogenes, webbed neck, "
+    "lowered nuchal hairline, and low set ears (note: allelic with LEOPARD syndrome – both have pulmonic stenosis)",  );
+Disease costello = Disease("Costello", "RAS" , "AD, one of the RASopathies; mutations in HRAS (85%) > "
+    "KRAS (10%–15%). Lax skin on hands and feet, coarse facies, low-set ears, deep palmoplantar creases, "
+    "periorificial papillomas, acanthosis nigricans, and curly hair");
+
+class Drug {
+  Drug(this.name, this.gene, this.info);
+  String name;
+  String gene;
+  String info;
+}
+
+
+
 class Protein {
   Protein(this.name, this.key);
   String name;
@@ -46,16 +70,23 @@ class Protein {
 
 List<String> mapk = [
   "Tyrosine Kinase",
-  "SHP2/SOS",
+  "SHP2 SOS",
   "RAS:KRAS/HRAS/NRAS",
   "BRAF",
   "MEK",
   "ERK",
-  "Cyclins"
+  "Cyclins,n"
 ];
-List<String> gprot = ["G-Protein Coupled Receptor", "GNAQ", "+RAS"];
+
+List<String> gprot = ["G-Protein CP:QNAQ/QNAS"];
+
+List<String> stopras = ["-Neurofibromin"];
+
 List<Protein> mapkProteins = mapk.map((e) => Protein(e, GlobalKey())).toList();
+
+
 List<List<Protein>> allProteins = [[]];
+List<Disease> allDiseases = [];
 
 class ProfileCardPainter extends CustomPainter {
   ProfileCardPainter({@required this.color});
@@ -105,14 +136,16 @@ class ProfileCardPainter extends CustomPainter {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     initImage();
     updateDrawer();
-    List<List<String>> strings = [gprot, mapk];
+    List<List<String>> strings = [gprot, mapk, stopras];         //TODO: add all pathways
     allProteins = strings
         .map((e) => e.map((e) => Protein(e, GlobalKey())).toList())
         .toList();
+
+     allDiseases = [noonan, costello];
+
   }
 
   void listener(PhotoViewControllerValue value) {
@@ -169,40 +202,235 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Widget> drawerItems = [];
 
+
+  void _showDialog(BuildContext context, String name, String info) {
+    // flutter defined function
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog(
+          title:  Text(name),
+          content:  Column(
+            mainAxisSize: MainAxisSize.min,
+
+            children: <Widget>[
+              Text(info)
+            ],
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('done'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget nuclear() {
+    List<Widget> a = [];
+
+    allProteins.asMap().forEach((num, pathway) {
+
+      List<Widget> colStuff = [];
+      pathway.asMap().forEach((key, value) {
+
+        if (value.name.contains(',')) {
+          if (value.name.substring(value.name.indexOf(',') ).contains('n')  ) {
+
+            String name = 'No name';
+            String info = 'No info';
+            Widget diseaseState = Container();
+            allDiseases.asMap().forEach((n, disease) {
+              if (value.name.toUpperCase().contains( disease.gene.toUpperCase() ) ) {
+                name = disease.name;
+                info = disease.info;
+                diseaseState = GestureDetector(
+                  onTap: () => {
+                    _showDialog(context, name, info)
+                  },
+                  child: Container(
+
+
+                      child: Text(name),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        color: Colors.red,
+                      )),
+                );
+              }
+            });
+
+            colStuff.add(Container(
+
+              child: Row(
+                children: [
+                  Container(
+                    key: value.key,
+                    padding: EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      color: Colors.lightBlue,
+                    ),
+                    child: Text(value.name.contains(':') ? value.name.substring(0, value.name.indexOf(':')) : value.name),
+                  ),
+                  diseaseState
+                ],
+              ),
+            ));
+
+
+            if (value.name.contains(':')) {
+              List<Widget> vbox = [];
+              List<String> variants = value.name.substring(value.name.indexOf(':') + 1).split('/');
+              variants.asMap().forEach((v, variant) {
+                vbox.add(Container(
+
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(width: 2),
+                      borderRadius: BorderRadius.circular(15),
+                      color: Colors.lightGreen,
+                    ),
+                    child: Text(variant),
+                  ),
+                ));
+              });
+              colStuff.add(Row(children: vbox,));
+            }
+
+            if (key < pathway.length - 1) {
+              colStuff.add(Container(
+
+                child: Icon(
+                  Icons.arrow_downward_outlined,
+                  color: Colors.green,
+                ),
+              ));
+            }
+
+          }
+        }
+
+
+      });
+      Column col = Column(
+        children: colStuff,
+      );
+      a.add(col);
+
+
+    });
+    return Row( children: a,) ;
+  }
+
   List<Widget> enzymes() {
     List<Widget> a = [];
-    double x = 0;
+
     allProteins.asMap().forEach((num, pathway) {
-      x = x + 200;
-      double y = 0;
-      pathway.asMap().forEach((key, value) {
-        y = y + 100;
-        a.add(Positioned(
-          left: 100 + x,
-          top: y,
-          child: Container(
-            key: value.key,
-            padding: EdgeInsets.all(15),
-            decoration: BoxDecoration(
+      if (pathway[0].name.substring(0,1) == '-') {
+        List<Widget> colStuff = [];
+        pathway.asMap().forEach((key, value) {
+          colStuff.add(
+            Container(height: 500,),);
+          colStuff.add(Container(width: 100, height: 100, color: Colors.red,)
+          );
+        });
+        Column col = Column(
+          children: colStuff,
+        );
+        a.add(col);
+    }else{
+        List<Widget> colStuff = [];
+        pathway.asMap().forEach((key, value) {
+          if (!value.name.contains(',')) {
+            String name = 'No name';
+            String info = 'No info';
+            Widget diseaseState = Container();
+            allDiseases.asMap().forEach((n, disease) {
+              if (value.name.toUpperCase().contains( disease.gene.toUpperCase() ) ) {
+                name = disease.name;
+                info = disease.info;
+                diseaseState = GestureDetector(
+                  onTap: () => {
+                    _showDialog(context, name, info)
+                  },
+                  child: Container(
+        
+        
+              child: Text(name),
+              decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
-              color: Colors.lightBlue,
-            ),
-            child: Text(value.name),
-          ),
-        ));
-        if (key < pathway.length - 1) {
-          a.add(Positioned(
-            left: 100 + x,
-            top: y + 50,
-            child: Icon(
-              Icons.arrow_downward_outlined,
-              color: Colors.green,
-            ),
-          ));
-        }
-      });
+              color: Colors.red,
+              )),
+                );
+              }
+            });
+        
+            colStuff.add(Container(
+        
+              child: Row(
+                children: [
+                  Container(
+                    key: value.key,
+                    padding: EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      color: Colors.lightBlue,
+                    ),
+                    child: Text(value.name.contains(':') ? value.name.substring(0, value.name.indexOf(':')) : value.name),
+                  ),
+                  diseaseState
+                ],
+              ),
+            ));
+        
+        
+            if (value.name.contains(':')) {
+              List<Widget> vbox = [];
+              List<String> variants = value.name.substring(value.name.indexOf(':') + 1).split('/');
+              variants.asMap().forEach((v, variant) {
+                vbox.add(Container(
+        
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(width: 2),
+                      borderRadius: BorderRadius.circular(15),
+                      color: Colors.lightGreen,
+                    ),
+                    child: Text(variant),
+                  ),
+                ));
+              });
+              colStuff.add(Row(children: vbox,));
+            }
+        
+            if (key < pathway.length - 1) {
+              colStuff.add(Container(
+        
+                child: Icon(
+                  Icons.arrow_downward_outlined,
+                  color: Colors.green,
+                ),
+              ));
+            }
+          }
+        
+        
+        });
+        Column col = Column(
+          children: colStuff,
+        );
+        a.add(col);
+      }
+
+
     });
-    return a;
+    return [Row( children: a, mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start,) ];
   }
 
   updateDrawer() {
@@ -251,13 +479,16 @@ class _MyHomePageState extends State<MyHomePage> {
           boundaryMargin: EdgeInsets.all(80),
           constrained: true,
           minScale: 0.5,
-          maxScale: 4,
+          maxScale: 10,
 
           child: Container(
               // height: 100,
               // width: 100,
               decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 5)),
+                  border: Border.all(color: Colors.blue, width: 5),
+                borderRadius: BorderRadius.circular(40)
+              ),
+              
               child: FittedBox(
                 child: Stack(
                   children: [
@@ -267,6 +498,24 @@ class _MyHomePageState extends State<MyHomePage> {
                       height: 1000,
                     ),
                     ...enzymes(),
+                    Container(
+                      width: 1000,
+                      height: 1000,
+                      child: Column(
+                        children: [
+                          Expanded(child: Container(),),
+                          Expanded(child: Container(
+                            padding: EdgeInsets.all(50),
+                            child: Container(
+                              child: nuclear(),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.purple, width: 5),
+                                borderRadius: BorderRadius.circular(40)
+                            ),),
+                          ))
+                        ],
+                      ),
+                    )
                     // CustomPaint(
                     //   size: Size(1000, 1000),
                     //   painter: ProfileCardPainter(color: Colors.orange),
