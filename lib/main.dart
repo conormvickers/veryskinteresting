@@ -48,25 +48,34 @@ class Disease {
   String info;
   bool activating;
 }
+
 class Medication {
   Medication(this.name, this.gene, this.info);
   String name;
   String gene;
   String info;
 }
+
 List<Medication> allMedications = [
-  Medication("Vismodegib", "SMO", ""
-  ),
+  Medication("Vismodegib", "SMO", ""),
   Medication("Vemurafenib\nDabrafenib", "BRAF", ""),
   Medication("Trametenib", "MEK", "")
 ];
 
 List<Disease> allDiseases = [
- Disease("Noonan Syndrome", "SHP2 SOS", "",  ),
- Disease("HRAS: Spitz, Costello, Phakomatosis Pigmentokeratotica\nNRAS: Congenital Nevi\nKRAS: Noonan", "RAS" , ""),
-Disease("Gorlin", "PTCH", ""),
-Disease("LEOPARD", "PTPN", ""),
-  Disease("GNAQ: Uveal Melanoma, Blue Nevus, Port Wine\nGNAS: Mccune Albright", "GNAQ", ""),
+  Disease(
+    "Noonan Syndrome",
+    "SHP2 SOS",
+    "",
+  ),
+  Disease(
+      "HRAS: Spitz, Costello, Phakomatosis Pigmentokeratotica\nNRAS: Congenital Nevi\nKRAS: Noonan",
+      "RAS",
+      ""),
+  Disease("Gorlin", "PTCH", ""),
+  Disease("LEOPARD", "PTPN", ""),
+  Disease("GNAQ: Uveal Melanoma, Blue Nevus, Port Wine\nGNAS: Mccune Albright",
+      "GNAQ", ""),
   Disease("NAME/LAME", "PKA", ""),
   Disease("Neurofibromatosus", "neurofibromin", ""),
   Disease("Melanoma non-sun exposed", "BRAF", ""),
@@ -74,11 +83,13 @@ Disease("LEOPARD", "PTPN", ""),
   Disease("Legius", "spred1", ""),
   Disease("SebK, Epidermal Nevus\nKippel-Trenauny, CLOVES ", "PI3K", ""),
   Disease("Neurofibromatosis 2, Cowden, Bannanyana", "PTEN", ""),
-  Disease("Proteus" , "AKT" , ""),
-  Disease("Tubeous Sclerosus" , "Hamartin" , ""),
-  Disease("Birt-Hogg-Dube", "Folliculin" ,""),
-  Disease("Incognentia Pigmenti\nHypohydrotic Ectodermal Dyspasia w/ Immunodefficiency" , "NEMO", "" )
-
+  Disease("Proteus", "AKT", ""),
+  Disease("Tubeous Sclerosus", "Hamartin", ""),
+  Disease("Birt-Hogg-Dube", "Folliculin", ""),
+  Disease(
+      "Incognentia Pigmenti\nHypohydrotic Ectodermal Dyspasia w/ Immunodefficiency",
+      "NEMO",
+      "")
 ];
 
 class Drug {
@@ -102,18 +113,11 @@ List<String> mapk = [
   "BRAF",
   "MEK",
   "ERK",
-
 ];
 
-List<String> mtorpath = [
-  "Tyrosine Kinase",
-  "PI3K",
-  "AKT",
-  "mtor"
-];
+List<String> mtorpath = ["Tyrosine Kinase", "PI3K", "AKT", "mtor"];
 List<String> antiTor = [
   "-PI3K",
-
   "PTEN Merlin",
   "-AKT",
   "Hamartin Tuberin",
@@ -121,17 +125,31 @@ List<String> antiTor = [
   "Folliculin"
 ];
 
-List<String> gprot = ["G-Protein CP:GNAQ/GNAS", "Adenylate Cyclase", "cAMP", "PKA"];
+List<String> gprot = [
+  "G-Protein CP:GNAQ/GNAS",
+  "Adenylate Cyclase",
+  "cAMP",
+  "PKA"
+];
 
 List<String> ptchpath = ["SMO", "GLI"];
-List<String> nemo = ["TNF-a" , "NEMO" , "IkB - NFkB - p50"];
-List<String> antiNemo = ["-NEMO" , "CYLD"];
+List<String> nemo = ["TNF-a", "NEMO", "IkB - NFkB - p50"];
+List<String> antiNemo = ["-NEMO", "CYLD"];
 
 List<String> ptch = ["-SMO", "PTCH"];
-List<String> stopras = ["-RAS" , "Neurofibromin", "-BRAF" , "Spred1"];
+List<String> stopras = ["-RAS", "Neurofibromin", "-BRAF", "Spred1"];
 
-List<List<String>> strings = [gprot, mapk, stopras, mtorpath, antiTor, ptchpath, ptch , nemo , antiNemo,
-  ["Wnt" , 'Frizzled' , 'beta catenin'],
+List<List<String>> strings = [
+  gprot,
+  mapk,
+  stopras,
+  mtorpath,
+  antiTor,
+  ptchpath,
+  ptch,
+  nemo,
+  antiNemo,
+  ["Wnt", 'Frizzled', 'beta catenin'],
   ['-beta catenin', 'APC'],
   ["Cyclins,nuclear", 'Cell Cycle progression'],
   ["-cyclins,nuclear", "BAP, p57, p53, p16"]
@@ -139,9 +157,7 @@ List<List<String>> strings = [gprot, mapk, stopras, mtorpath, antiTor, ptchpath,
 
 List<Protein> mapkProteins = mapk.map((e) => Protein(e, GlobalKey())).toList();
 
-
 List<List<Protein>> allProteins = [[]];
-
 
 // class ProfileCardPainter extends CustomPainter {
 //   ProfileCardPainter({@required this.color});
@@ -190,13 +206,13 @@ List<List<Protein>> allProteins = [[]];
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
-
   void initState() {
     super.initState();
     _controllerReset = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
+
     initImage();
     updateDrawer();
 
@@ -204,15 +220,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         .map((e) => e.map((e) => Protein(e, GlobalKey())).toList())
         .toList();
     slideController = TransformationController();
-
-
   }
 
   final TransformationController _transformationController =
-  TransformationController();
+      TransformationController();
   Animation<Matrix4> _animationReset;
   AnimationController _controllerReset;
-
 
   void _onAnimateReset() {
     _transformationController.value = _animationReset.value;
@@ -249,7 +262,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     }
   }
 
-
   @override
   void dispose() {
     _controllerReset.dispose();
@@ -278,47 +290,45 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     url = await ref.getDownloadURL();
     print('got download url' + url);
     // setState(() {
-      // _image = Image.network(url);
-      final downloadedData =  await ref.getData();
-      // print(Utf8Decoder().convert(downloadedData));
-      String decoded = Utf8Decoder().convert(downloadedData);
-      List<String> split = decoded.split('[');
-      List<List<String>> diseaseData = [];
-      split.asMap().forEach((key, value) {
-        if (value.contains(']') && value.contains( '-' )) {
-          diseaseData.add([value.substring(0, value.indexOf('-')) , value.substring(value.indexOf('-') + 2)]);
+    // _image = Image.network(url);
+    final downloadedData = await ref.getData();
+    // print(Utf8Decoder().convert(downloadedData));
+    String decoded = Utf8Decoder().convert(downloadedData);
+    List<String> split = decoded.split('[');
+    List<List<String>> diseaseData = [];
+    split.asMap().forEach((key, value) {
+      if (value.contains(']') && value.contains('-')) {
+        diseaseData.add([
+          value.substring(0, value.indexOf('-')),
+          value.substring(value.indexOf('-') + 2)
+        ]);
+      }
+    });
+    print('looking for #' + diseaseData.length.toString());
+    allDiseases.asMap().forEach((key, value) {
+      diseaseData.asMap().forEach((k, data) {
+        final String a = data[0].toUpperCase().replaceAll(' ', '');
+        final String b = value.name.toUpperCase().replaceAll(" ", "");
+        if (b.contains(a)) {
+          print("found data for " + value.name);
+          value.info = value.info + data[1];
         }
       });
-      print('looking for #' + diseaseData.length.toString() );
-      allDiseases.asMap().forEach((key, value) {
-        diseaseData.asMap().forEach((k, data) {
-          final String a = data[0].toUpperCase().replaceAll(' ', '');
-          final String b = value.name.toUpperCase().replaceAll(" ", "");
-
-          print("checking " + a + ' | ' + b);
-          if (b.contains(a)) {
-            print("found data for " + value.name);
-            value.info = value.info + data[1];
-          }
-        });
-
-      });
-
-      // _image.image.resolve(ImageConfiguration()).addListener(
-      //   ImageStreamListener(
-      //     (info, call) {
-      //       print('Networkimage is fully loaded and saved');
-      //       setState(() {
-      //         _loading = false;
-      //       });
-      //       // do something
-      //     },
-      //   ),
-      // );
-    // });
-    setState(() {
-
     });
+
+    // _image.image.resolve(ImageConfiguration()).addListener(
+    //   ImageStreamListener(
+    //     (info, call) {
+    //       print('Networkimage is fully loaded and saved');
+    //       setState(() {
+    //         _loading = false;
+    //       });
+    //       // do something
+    //     },
+    //   ),
+    // );
+    // });
+    setState(() {});
   }
 
   listDocs() async {
@@ -339,32 +349,22 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   List<Widget> drawerItems = [];
 
-
   void _showDialog(BuildContext context, String name, String info) {
-    print("PRESSED");
-    print(name );
     // flutter defined function
     showDialog(
       context: context,
       builder: (BuildContext context) {
         // return object of type Dialog
         return AlertDialog(
-          title:  Text(name),
-          content:  Column(
-
+          title: Text(name),
+          content: Column(
             children: [
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.lightBlue),
-                  borderRadius: BorderRadius.circular(15)
-                ),
-                constraints: BoxConstraints(
-                  maxHeight: 400
-                ),
-                child:
-
-                      SingleChildScrollView(child: Text(info)),
-
+                    border: Border.all(color: Colors.lightBlue),
+                    borderRadius: BorderRadius.circular(15)),
+                constraints: BoxConstraints(maxHeight: 400),
+                child: SingleChildScrollView(child: Text(info)),
               ),
             ],
           ),
@@ -381,109 +381,31 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget nuclear() {
-    List<Widget> a = [];
-    allProteins.asMap().forEach((num, pathway) {
-      List<Widget> colStuff = [];
-      pathway.asMap().forEach((key, value) {
-        if (value.name.contains(',')) {
-          if (value.name.substring(value.name.indexOf(',') ).contains('n')  ) {
-            String name = 'No name';
-            String info = 'No info';
-            Widget diseaseState = Container();
-            allDiseases.asMap().forEach((n, disease) {
-              if (value.name.toUpperCase().contains( disease.gene.toUpperCase() ) ) {
-                name = disease.name;
-                info = disease.info;
-                diseaseState = GestureDetector(
-                  onTap: () => {
-                    _showDialog(context, name, info)
-                  },
-                  child: Container(
-                      child: Text(name),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        color: Colors.red,
-                      )),
-                );
-              }
-            });
-            colStuff.add(Container(
-
-              child: Row(
-                children: [
-                  Container(
-                    key: value.key,
-                    padding: EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
-                      color: Colors.lightBlue,
-                    ),
-                    child: Text(value.name.contains(':') ? value.name.substring(0, value.name.indexOf(':')) : value.name),
-                  ),
-                  diseaseState
-                ],
-              ),
-            ));
-            if (value.name.contains(':')) {
-              List<Widget> vbox = [];
-              List<String> variants = value.name.substring(value.name.indexOf(':') + 1).split('/');
-              variants.asMap().forEach((v, variant) {
-                vbox.add(Container(
-
-                  child: Container(
-                    decoration: BoxDecoration(
-
-                      borderRadius: BorderRadius.circular(15),
-                      color: Colors.lightBlueAccent,
-                    ),
-                    child: Text(variant),
-                  ),
-                ));
-              });
-              colStuff.add(Row(children: vbox,));
-            }
-
-            if (key < pathway.length - 1) {
-              colStuff.add(Container(
-
-                child: Icon(
-                  Icons.arrow_downward_outlined,
-                  color: Colors.green,
-                ),
-              ));
-            }
-
-          }
-        }
-      });
-      Column col = Column(
-        children: colStuff,
-      );
-      a.add(col);
-    });
-    return Row( children: a,) ;
-  }
-
   Widget enzymes() {
     List<Widget> a = [];
     List<Widget> b = [];
 
     allProteins.asMap().forEach((num, pathway) {
-      if (pathway[0].name.substring(0,1) == '-') {
+      if (pathway[0].name.substring(0, 1) == '-') {
         List<Widget> colStuff = [];
         List<double> spacers = [];
         int spacerIndex = 0;
         pathway.asMap().forEach((number, value) {
           if (number.isEven || number == 0) {
-            print("checking " + value.name + ' for ' + pathway[number + 1].name);
+            print(
+                "checking " + value.name + ' for ' + pathway[number + 1].name);
             allProteins[num - 1].asMap().forEach((key, previous) {
-              if (previous.name.toUpperCase().contains(value.name.substring(1).toUpperCase())) {
-                print('found ' + value.name + '->' + key.toString() );
-                spacers.add( key.toDouble() );
+              if (previous.name
+                  .toUpperCase()
+                  .contains(value.name.substring(1).toUpperCase())) {
+                print('found ' + value.name + '->' + key.toString());
+                spacers.add(key.toDouble());
               }
             });
-            print('spacers: ' + spacers.toString() + 'indx' + spacerIndex.toString());
+            print('spacers: ' +
+                spacers.toString() +
+                'indx' +
+                spacerIndex.toString());
 
             if (spacers.length > 0) {
               double space = spacers[spacerIndex];
@@ -491,7 +413,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               if (spacerIndex > 0) {
                 space = spacers[spacerIndex] - spacers[spacerIndex - 1] - 1;
               }
-              colStuff.add(Container(height: (space * 75) ));
+              colStuff.add(Container(height: (space * 75)));
 
               spacerIndex++;
             }
@@ -500,18 +422,21 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             String info = 'No info';
             Widget diseaseState = Container();
             allDiseases.asMap().forEach((n, disease) {
-              if (pathway[number + 1].name.toUpperCase().contains( disease.gene.toUpperCase() ) ) {
-
+              if (pathway[number + 1]
+                  .name
+                  .toUpperCase()
+                  .contains(disease.gene.toUpperCase())) {
                 name = disease.name;
                 info = disease.info;
+
                 diseaseState = GestureDetector(
-                  onTap: () => {
-                    _showDialog(context, name, info)
-                  },
+                  onTap: () => {_showDialog(context, name, info)},
                   child: Container(
                       padding: EdgeInsets.all(5),
-
-                      child: Text(name, style: TextStyle(color: Colors.white),),
+                      child: Text(
+                        name,
+                        style: TextStyle(color: Colors.white),
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(15),
                         color: Colors.orange,
@@ -521,7 +446,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             });
             colStuff.add(Row(
               children: [
-                Icon(Icons.arrow_left, color: Colors.red,),
+                Icon(
+                  Icons.arrow_left,
+                  color: Colors.red,
+                ),
                 Icon(Icons.stop_circle_outlined, color: Colors.red),
                 Container(
                   padding: EdgeInsets.all(15),
@@ -529,12 +457,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     borderRadius: BorderRadius.circular(15),
                     color: Colors.red,
                   ),
-                  child: Text(pathway[number + 1].name, style: TextStyle(color: Colors.white, fontSize: 20),),),
+                  child: Text(
+                    pathway[number + 1].name,
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  ),
+                ),
                 diseaseState
               ],
-            ) );
-            colStuff.add(Container(height: 20,));
-
+            ));
+            colStuff.add(Container(
+              height: 20,
+            ));
           }
         });
         Column col = Column(
@@ -544,107 +477,120 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         );
         if (pathway[0].name.toUpperCase().contains(",NUCLEAR")) {
           b.add(col);
-        }else{
+        } else {
           a.add(col);
         }
-
-    }else{
-        a.add(Column(children: [Container(width: 100,)],));
+      } else {
+        a.add(Column(
+          children: [
+            Container(
+              width: 100,
+            )
+          ],
+        ));
         List<Widget> colStuff = [];
         pathway.asMap().forEach((key, value) {
-
-            String name = 'No name';
-            String info = 'No info';
-            Widget diseaseState = Container();
-            allDiseases.asMap().forEach((n, disease) {
-              if (value.name.toUpperCase().contains( disease.gene.toUpperCase() ) ) {
-                name = disease.name;
-                info = disease.info;
-                diseaseState = GestureDetector(
-                  onTap: () => {
-                    _showDialog(context, name, info)
-                  },
-                  child: Container(
-                      padding: EdgeInsets.all(5),
-        
-        
-              child: Text(name, style: TextStyle(color: Colors.white),),
-              decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              color: Colors.orange,
-              )),
-                );
-              }
-            });
-            Widget vs = Container();
-            if (value.name.contains(':')) {
-              List<Widget> vbox = [];
-              List<String> variants = value.name.substring(value.name.indexOf(':') + 1).split('/');
-              variants.asMap().forEach((v, variant) {
-                vbox.add(Container(
-
-                  child: Container(
+          String name = 'No name';
+          String info = 'No info';
+          Widget diseaseState = Container();
+          allDiseases.asMap().forEach((n, disease) {
+            if (value.name.toUpperCase().contains(disease.gene.toUpperCase())) {
+              name = disease.name;
+              info = disease.info;
+              print(name + ' {} ' + info + '\\' + disease.gene.toUpperCase());
+              diseaseState = GestureDetector(
+                onTap: () => {_showDialog(context, name, info)},
+                child: Container(
                     padding: EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-
-                      borderRadius: BorderRadius.circular(15),
-                      color: Colors.lightBlueAccent,
+                    child: Text(
+                      name,
+                      style: TextStyle(color: Colors.white),
                     ),
-                    child: Text(variant, style: TextStyle(color: Colors.white),),
-                  ),
-                ));
-              });
-              vs = (Column(children: vbox,));
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      color: Colors.orange,
+                    )),
+              );
             }
-
-            Widget medicationState = Container();
-            allMedications.asMap().forEach((n, medication) {
-              if (value.name.toUpperCase().contains( medication.gene.toUpperCase() ) ) {
-                name = medication.name;
-                info = medication.info;
-                medicationState = GestureDetector(
-                  onTap: () => {
-                    _showDialog(context, name, info)
-                  },
-                  child: Container(
-                      padding: EdgeInsets.all(5),
-                      child: Text(name, style: TextStyle(color: Colors.white),),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        color: Colors.lightGreen,
-                      )),
-                );
-              }
-            });
-            colStuff.add(Container(
-        
-              child: Row(
-                children: [
-                  vs,
-                  Container(
-                    key: value.key,
-                    padding: EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
-                      color: Colors.lightBlue,
-                    ),
-                    child: Text(value.name.contains(':') ? value.name.substring(0, value.name.indexOf(':')) : value.name, style: TextStyle(color: Colors.white, fontSize: 20),),
+          });
+          Widget vs = Container();
+          if (value.name.contains(':')) {
+            List<Widget> vbox = [];
+            List<String> variants =
+                value.name.substring(value.name.indexOf(':') + 1).split('/');
+            variants.asMap().forEach((v, variant) {
+              vbox.add(Container(
+                child: Container(
+                  padding: EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    color: Colors.lightBlueAccent,
                   ),
-                  diseaseState,
-                  medicationState
-                ],
-              ),
-            ));
-            if (key < pathway.length - 1) {
-              colStuff.add(Container(
-        
-                child: Icon(
-                  Icons.arrow_downward_outlined,
-                  color: Colors.green,
+                  child: Text(
+                    variant,
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ));
-            }
+            });
+            vs = (Column(
+              children: vbox,
+            ));
+          }
 
+          Widget medicationState = Container();
+          allMedications.asMap().forEach((n, medication) {
+            if (value.name
+                .toUpperCase()
+                .contains(medication.gene.toUpperCase())) {
+              String mname = medication.name;
+              String minfo = medication.info;
+              medicationState = GestureDetector(
+                onTap: () => {_showDialog(context, mname, minfo)},
+                child: Container(
+                    padding: EdgeInsets.all(5),
+                    child: Text(
+                      mname,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      color: Colors.lightGreen,
+                    )),
+              );
+            }
+          });
+          colStuff.add(Container(
+            child: Row(
+              children: [
+                vs,
+                Container(
+                  key: value.key,
+                  padding: EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    color: Colors.lightBlue,
+                  ),
+                  child: Text(
+                    value.name.contains(':')
+                        ? value.name.substring(0, value.name.indexOf(':'))
+                        : value.name,
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  ),
+                ),
+                diseaseState,
+                medicationState
+              ],
+            ),
+          ));
+          if (key < pathway.length - 1) {
+            colStuff.add(Container(
+              child: Icon(
+                Icons.arrow_downward_outlined,
+                color: Colors.green,
+              ),
+            ));
+          }
         });
         Column col = Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -653,13 +599,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         );
         if (pathway[0].name.toUpperCase().contains(",NUCLEAR")) {
           b.add(col);
-        }else{
+        } else {
           a.add(col);
         }
       }
-      
     });
-    
 
     Widget nucleus = Container(
       padding: EdgeInsets.all(50),
@@ -677,10 +621,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ),
       ),
     );
-    
+
     return Column(
       children: [
-        Row( children: a, mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start,),
+        Row(
+          children: a,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+        ),
         nucleus
       ],
     );
@@ -727,44 +675,51 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ),
       ),
       body: Center(
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              width: 2
-            )
-          ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(border: Border.all(width: 2)),
+                child: InteractiveViewer(
+                  panEnabled: true, // Set it to false to prevent panning.
+                  boundaryMargin: EdgeInsets.all(80),
+                  constrained: true,
+                  minScale: 0.5,
+                  maxScale: 10,
+                  clipBehavior: Clip.none,
+                  onInteractionStart: _onInteractionStart,
+                  onInteractionEnd: (ScaleEndDetails) => {
+                    //print(_transformationController.value),
+                  },
+                  transformationController: _transformationController,
 
-          child: InteractiveViewer(
-            panEnabled: true, // Set it to false to prevent panning.
-            boundaryMargin: EdgeInsets.all(80),
-            constrained: true,
-            minScale: 0.5,
-            maxScale: 10,
-            clipBehavior: Clip.none,
-            onInteractionStart: _onInteractionStart,
-            onInteractionEnd: (ScaleEndDetails) => {
-              //print(_transformationController.value),
-            },
-            transformationController: _transformationController,
-
-            child: Container(
-
-                decoration: BoxDecoration(
-                    border: Border.all(color: Colors.pink, width: 5),
-                  borderRadius: BorderRadius.circular(40),
-                  color: Colors.pink.withAlpha(50)
-                ),
-
-                child: FittedBox(
-                  child: Stack(
+                  child: Column(
                     children: [
-
-                      enzymes(),
-
+                      Expanded(
+                        child: Container(),
+                      ),
+                      Container(
+                          decoration: BoxDecoration(
+                              border: Border.all(color: Colors.pink, width: 5),
+                              borderRadius: BorderRadius.circular(40),
+                              color: Colors.pink.withAlpha(50)),
+                          child: FittedBox(
+                            fit: BoxFit.fitWidth,
+                            child: Stack(
+                              children: [
+                                enzymes(),
+                              ],
+                            ),
+                          )),
+                      Expanded(
+                        child: Container(),
+                      ),
                     ],
                   ),
-                )),
-          ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
 
@@ -809,11 +764,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       //       ),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: () => {
-          _animateResetInitialize()
-        },
+        onPressed: () => {_animateResetInitialize()},
         tooltip: 'Increment',
-        child: Icon(Icons.add),
+        child: Icon(Icons.fullscreen),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
