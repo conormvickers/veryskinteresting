@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:html';
 import 'package:flutter/gestures.dart';
 import 'package:photo_view/photo_view.dart';
@@ -7,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:transparent_image/transparent_image.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 void main() {
   runApp(MyApp());
@@ -46,13 +48,38 @@ class Disease {
   String info;
   bool activating;
 }
-Disease noonan = Disease("Noonan Syndrome", "SHP2 SOS", "Noonan syndrome: lower extremity lymphedema, "
-    "CALM, multiple nevi, light/curly/rough hair, hypertelorism, ulerythema ophryogenes, webbed neck, "
-    "lowered nuchal hairline, and low set ears (note: allelic with LEOPARD syndrome – both have pulmonic stenosis)",  );
-Disease costello = Disease("HRAS: Spitz + Costello\nNRAS: Congenital Nevi", "RAS" , "AD, one of the RASopathies; mutations in HRAS (85%) > "
-    "KRAS (10%–15%). Lax skin on hands and feet, coarse facies, low-set ears, deep palmoplantar creases, "
-    "periorificial papillomas, acanthosis nigricans, and curly hair");
-Disease gorlin = Disease("Gorlin", "PTCH", "Basal cell syndrome");
+class Medication {
+  Medication(this.name, this.gene, this.info);
+  String name;
+  String gene;
+  String info;
+}
+List<Medication> allMedications = [
+  Medication("Vismodegib", "SMO", ""
+  ),
+  Medication("Vemurafenib\nDabrafenib", "BRAF", ""),
+  Medication("Trametenib", "MEK", "")
+];
+
+List<Disease> allDiseases = [
+ Disease("Noonan Syndrome", "SHP2 SOS", "",  ),
+ Disease("HRAS: Spitz, Costello, Phakomatosis Pigmentokeratotica\nNRAS: Congenital Nevi\nKRAS: Noonan", "RAS" , ""),
+Disease("Gorlin", "PTCH", ""),
+Disease("LEOPARD", "PTPN", ""),
+  Disease("GNAQ: Uveal Melanoma, Blue Nevus, Port Wine\nGNAS: Mccune Albright", "GNAQ", ""),
+  Disease("NAME/LAME", "PKA", ""),
+  Disease("Neurofibromatosus", "neurofibromin", ""),
+  Disease("Melanoma non-sun exposed", "BRAF", ""),
+  Disease("Cardiofacio Cutaneous Syndrome", "MEK", ""),
+  Disease("Legius", "spred1", ""),
+  Disease("SebK, Epidermal Nevus\nKippel-Trenauny, CLOVES ", "PI3K", ""),
+  Disease("Neurofibromatosis 2, Cowden, Bannanyana", "PTEN", ""),
+  Disease("Proteus" , "AKT" , ""),
+  Disease("Tubeous Sclerosus" , "Hamartin" , ""),
+  Disease("Birt-Hogg-Dube", "Folliculin" ,""),
+  Disease("Incognentia Pigmenti\nHypohydrotic Ectodermal Dyspasia w/ Immunodefficiency" , "NEMO", "" )
+
+];
 
 class Drug {
   Drug(this.name, this.gene, this.info);
@@ -60,8 +87,6 @@ class Drug {
   String gene;
   String info;
 }
-
-
 
 class Protein {
   Protein(this.name, this.key);
@@ -73,11 +98,11 @@ List<String> mapk = [
   "Tyrosine Kinase",
   "PTPNII",
   "SHP2 SOS",
-  "RAS:KRAS/HRAS/NRAS",
+  "RAS:HRAS/NRAS/KRAS",
   "BRAF",
   "MEK",
   "ERK",
-  "Cyclins,n"
+
 ];
 
 List<String> mtorpath = [
@@ -86,19 +111,37 @@ List<String> mtorpath = [
   "AKT",
   "mtor"
 ];
+List<String> antiTor = [
+  "-PI3K",
 
-List<String> gprot = ["G-Protein CP:QNAQ/QNAS", "Adenylate Cyclase", "cAMP", "PKA"];
+  "PTEN Merlin",
+  "-AKT",
+  "Hamartin Tuberin",
+  "-mtor",
+  "Folliculin"
+];
+
+List<String> gprot = ["G-Protein CP:GNAQ/GNAS", "Adenylate Cyclase", "cAMP", "PKA"];
 
 List<String> ptchpath = ["SMO", "GLI"];
+List<String> nemo = ["TNF-a" , "NEMO" , "IkB - NFkB - p50"];
+List<String> antiNemo = ["-NEMO" , "CYLD"];
 
 List<String> ptch = ["-SMO", "PTCH"];
 List<String> stopras = ["-RAS" , "Neurofibromin", "-BRAF" , "Spred1"];
+
+List<List<String>> strings = [gprot, mapk, stopras, mtorpath, antiTor, ptchpath, ptch , nemo , antiNemo,
+  ["Wnt" , 'Frizzled' , 'beta catenin'],
+  ['-beta catenin', 'APC'],
+  ["Cyclins,nuclear", 'Cell Cycle progression'],
+  ["-cyclins,nuclear", "BAP, p57, p53, p16"]
+];
 
 List<Protein> mapkProteins = mapk.map((e) => Protein(e, GlobalKey())).toList();
 
 
 List<List<Protein>> allProteins = [[]];
-List<Disease> allDiseases = [];
+
 
 // class ProfileCardPainter extends CustomPainter {
 //   ProfileCardPainter({@required this.color});
@@ -145,19 +188,72 @@ List<Disease> allDiseases = [];
 //   }
 // }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
+
   void initState() {
     super.initState();
+    _controllerReset = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
     initImage();
     updateDrawer();
-    List<List<String>> strings = [gprot, mapk, stopras, mtorpath, ptchpath, ptch];         //TODO: add all pathways
+
     allProteins = strings
         .map((e) => e.map((e) => Protein(e, GlobalKey())).toList())
         .toList();
+    slideController = TransformationController();
 
-     allDiseases = [noonan, costello, gorlin];
 
+  }
+
+  final TransformationController _transformationController =
+  TransformationController();
+  Animation<Matrix4> _animationReset;
+  AnimationController _controllerReset;
+
+
+  void _onAnimateReset() {
+    _transformationController.value = _animationReset.value;
+    if (!_controllerReset.isAnimating) {
+      _animationReset.removeListener(_onAnimateReset);
+      _animationReset = null;
+      _controllerReset.reset();
+    }
+  }
+
+  void _animateResetInitialize() {
+    _controllerReset.reset();
+    _animationReset = Matrix4Tween(
+      begin: _transformationController.value,
+      end: Matrix4.identity(),
+    ).animate(_controllerReset);
+    _animationReset.addListener(_onAnimateReset);
+    _controllerReset.forward();
+  }
+
+// Stop a running reset to home transform animation.
+  void _animateResetStop() {
+    _controllerReset.stop();
+    _animationReset?.removeListener(_onAnimateReset);
+    _animationReset = null;
+    _controllerReset.reset();
+  }
+
+  void _onInteractionStart(ScaleStartDetails details) {
+    // If the user tries to cause a transformation while the reset animation is
+    // running, cancel the reset animation.
+    if (_controllerReset.status == AnimationStatus.forward) {
+      _animateResetStop();
+    }
+  }
+
+
+  @override
+  void dispose() {
+    _controllerReset.dispose();
+    super.dispose();
   }
 
   void listener(PhotoViewControllerValue value) {
@@ -167,6 +263,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   PhotoViewController controller;
+  TransformationController slideController;
   Image _image;
   bool _loading = true;
 
@@ -175,24 +272,52 @@ class _MyHomePageState extends State<MyHomePage> {
   String url;
   firebase_storage.Reference ref;
 
-  initImage([String item = 'mtor.png']) async {
+  initImage([String item = 'Diseases']) async {
     await Firebase.initializeApp();
-    ref = storage.ref().child(item);
+    ref = storage.ref().child(item).child('outfile.txt');
     url = await ref.getDownloadURL();
     print('got download url' + url);
+    // setState(() {
+      // _image = Image.network(url);
+      final downloadedData =  await ref.getData();
+      // print(Utf8Decoder().convert(downloadedData));
+      String decoded = Utf8Decoder().convert(downloadedData);
+      List<String> split = decoded.split('[');
+      List<List<String>> diseaseData = [];
+      split.asMap().forEach((key, value) {
+        if (value.contains(']') && value.contains( '-' )) {
+          diseaseData.add([value.substring(0, value.indexOf('-')) , value.substring(value.indexOf('-') + 2)]);
+        }
+      });
+      print('looking for #' + diseaseData.length.toString() );
+      allDiseases.asMap().forEach((key, value) {
+        diseaseData.asMap().forEach((k, data) {
+          final String a = data[0].toUpperCase().replaceAll(' ', '');
+          final String b = value.name.toUpperCase().replaceAll(" ", "");
+
+          print("checking " + a + ' | ' + b);
+          if (b.contains(a)) {
+            print("found data for " + value.name);
+            value.info = value.info + data[1];
+          }
+        });
+
+      });
+
+      // _image.image.resolve(ImageConfiguration()).addListener(
+      //   ImageStreamListener(
+      //     (info, call) {
+      //       print('Networkimage is fully loaded and saved');
+      //       setState(() {
+      //         _loading = false;
+      //       });
+      //       // do something
+      //     },
+      //   ),
+      // );
+    // });
     setState(() {
-      _image = Image.network(url);
-      _image.image.resolve(ImageConfiguration()).addListener(
-        ImageStreamListener(
-          (info, call) {
-            print('Networkimage is fully loaded and saved');
-            setState(() {
-              _loading = false;
-            });
-            // do something
-          },
-        ),
-      );
+
     });
   }
 
@@ -216,6 +341,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   void _showDialog(BuildContext context, String name, String info) {
+    print("PRESSED");
+    print(name );
     // flutter defined function
     showDialog(
       context: context,
@@ -224,10 +351,21 @@ class _MyHomePageState extends State<MyHomePage> {
         return AlertDialog(
           title:  Text(name),
           content:  Column(
-            mainAxisSize: MainAxisSize.min,
 
-            children: <Widget>[
-              Text(info)
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.lightBlue),
+                  borderRadius: BorderRadius.circular(15)
+                ),
+                constraints: BoxConstraints(
+                  maxHeight: 400
+                ),
+                child:
+
+                      SingleChildScrollView(child: Text(info)),
+
+              ),
             ],
           ),
           actions: <Widget>[
@@ -245,15 +383,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget nuclear() {
     List<Widget> a = [];
-
     allProteins.asMap().forEach((num, pathway) {
-
       List<Widget> colStuff = [];
       pathway.asMap().forEach((key, value) {
-
         if (value.name.contains(',')) {
           if (value.name.substring(value.name.indexOf(',') ).contains('n')  ) {
-
             String name = 'No name';
             String info = 'No info';
             Widget diseaseState = Container();
@@ -266,8 +400,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     _showDialog(context, name, info)
                   },
                   child: Container(
-
-
                       child: Text(name),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(15),
@@ -276,7 +408,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               }
             });
-
             colStuff.add(Container(
 
               child: Row(
@@ -294,8 +425,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               ),
             ));
-
-
             if (value.name.contains(':')) {
               List<Widget> vbox = [];
               List<String> variants = value.name.substring(value.name.indexOf(':') + 1).split('/');
@@ -304,9 +433,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border.all(width: 2),
+
                       borderRadius: BorderRadius.circular(15),
-                      color: Colors.lightGreen,
+                      color: Colors.lightBlueAccent,
                     ),
                     child: Text(variant),
                   ),
@@ -327,21 +456,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
           }
         }
-
-
       });
       Column col = Column(
         children: colStuff,
       );
       a.add(col);
-
-
     });
     return Row( children: a,) ;
   }
 
-  List<Widget> enzymes() {
+  Widget enzymes() {
     List<Widget> a = [];
+    List<Widget> b = [];
 
     allProteins.asMap().forEach((num, pathway) {
       if (pathway[0].name.substring(0,1) == '-') {
@@ -350,19 +476,23 @@ class _MyHomePageState extends State<MyHomePage> {
         int spacerIndex = 0;
         pathway.asMap().forEach((number, value) {
           if (number.isEven || number == 0) {
-            allProteins[num - 1].asMap().forEach((key, value) {
-              if (value.name.toUpperCase().contains(pathway[0].name.substring(1))) {
+            print("checking " + value.name + ' for ' + pathway[number + 1].name);
+            allProteins[num - 1].asMap().forEach((key, previous) {
+              if (previous.name.toUpperCase().contains(value.name.substring(1).toUpperCase())) {
+                print('found ' + value.name + '->' + key.toString() );
                 spacers.add( key.toDouble() );
               }
             });
+            print('spacers: ' + spacers.toString() + 'indx' + spacerIndex.toString());
 
             if (spacers.length > 0) {
               double space = spacers[spacerIndex];
 
-              if (spacers.length > 1) {
-                space = spacers[spacerIndex] - spacers[spacerIndex - 1];
+              if (spacerIndex > 0) {
+                space = spacers[spacerIndex] - spacers[spacerIndex - 1] - 1;
               }
-              colStuff.add(Container(height: (space * 70) + (spacerIndex * 30)));
+              colStuff.add(Container(height: (space * 75) ));
+
               spacerIndex++;
             }
 
@@ -371,7 +501,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Widget diseaseState = Container();
             allDiseases.asMap().forEach((n, disease) {
               if (pathway[number + 1].name.toUpperCase().contains( disease.gene.toUpperCase() ) ) {
-                print(disease.name + "|||||||" + value.name);
+
                 name = disease.name;
                 info = disease.info;
                 diseaseState = GestureDetector(
@@ -379,9 +509,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     _showDialog(context, name, info)
                   },
                   child: Container(
+                      padding: EdgeInsets.all(5),
 
-
-                      child: Text(name),
+                      child: Text(name, style: TextStyle(color: Colors.white),),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(15),
                         color: Colors.orange,
@@ -399,10 +529,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     borderRadius: BorderRadius.circular(15),
                     color: Colors.red,
                   ),
-                  child: Text(pathway[number + 1].name), ),
+                  child: Text(pathway[number + 1].name, style: TextStyle(color: Colors.white, fontSize: 20),),),
                 diseaseState
               ],
             ) );
+            colStuff.add(Container(height: 20,));
 
           }
         });
@@ -411,11 +542,17 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: colStuff,
         );
-        a.add(col);
+        if (pathway[0].name.toUpperCase().contains(",NUCLEAR")) {
+          b.add(col);
+        }else{
+          a.add(col);
+        }
+
     }else{
+        a.add(Column(children: [Container(width: 100,)],));
         List<Widget> colStuff = [];
         pathway.asMap().forEach((key, value) {
-          if (!value.name.contains(',')) {
+
             String name = 'No name';
             String info = 'No info';
             Widget diseaseState = Container();
@@ -428,9 +565,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     _showDialog(context, name, info)
                   },
                   child: Container(
+                      padding: EdgeInsets.all(5),
         
         
-              child: Text(name),
+              child: Text(name, style: TextStyle(color: Colors.white),),
               decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
               color: Colors.orange,
@@ -438,11 +576,51 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               }
             });
-        
+            Widget vs = Container();
+            if (value.name.contains(':')) {
+              List<Widget> vbox = [];
+              List<String> variants = value.name.substring(value.name.indexOf(':') + 1).split('/');
+              variants.asMap().forEach((v, variant) {
+                vbox.add(Container(
+
+                  child: Container(
+                    padding: EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+
+                      borderRadius: BorderRadius.circular(15),
+                      color: Colors.lightBlueAccent,
+                    ),
+                    child: Text(variant, style: TextStyle(color: Colors.white),),
+                  ),
+                ));
+              });
+              vs = (Column(children: vbox,));
+            }
+
+            Widget medicationState = Container();
+            allMedications.asMap().forEach((n, medication) {
+              if (value.name.toUpperCase().contains( medication.gene.toUpperCase() ) ) {
+                name = medication.name;
+                info = medication.info;
+                medicationState = GestureDetector(
+                  onTap: () => {
+                    _showDialog(context, name, info)
+                  },
+                  child: Container(
+                      padding: EdgeInsets.all(5),
+                      child: Text(name, style: TextStyle(color: Colors.white),),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        color: Colors.lightGreen,
+                      )),
+                );
+              }
+            });
             colStuff.add(Container(
         
               child: Row(
                 children: [
+                  vs,
                   Container(
                     key: value.key,
                     padding: EdgeInsets.all(15),
@@ -450,33 +628,13 @@ class _MyHomePageState extends State<MyHomePage> {
                       borderRadius: BorderRadius.circular(15),
                       color: Colors.lightBlue,
                     ),
-                    child: Text(value.name.contains(':') ? value.name.substring(0, value.name.indexOf(':')) : value.name),
+                    child: Text(value.name.contains(':') ? value.name.substring(0, value.name.indexOf(':')) : value.name, style: TextStyle(color: Colors.white, fontSize: 20),),
                   ),
-                  diseaseState
+                  diseaseState,
+                  medicationState
                 ],
               ),
             ));
-        
-        
-            if (value.name.contains(':')) {
-              List<Widget> vbox = [];
-              List<String> variants = value.name.substring(value.name.indexOf(':') + 1).split('/');
-              variants.asMap().forEach((v, variant) {
-                vbox.add(Container(
-        
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(width: 2),
-                      borderRadius: BorderRadius.circular(15),
-                      color: Colors.lightGreen,
-                    ),
-                    child: Text(variant),
-                  ),
-                ));
-              });
-              colStuff.add(Row(children: vbox,));
-            }
-        
             if (key < pathway.length - 1) {
               colStuff.add(Container(
         
@@ -486,21 +644,46 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ));
             }
-          }
-        
-        
+
         });
         Column col = Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: colStuff,
         );
-        a.add(col);
+        if (pathway[0].name.toUpperCase().contains(",NUCLEAR")) {
+          b.add(col);
+        }else{
+          a.add(col);
+        }
       }
-
-
+      
     });
-    return [Row( children: a, mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start,) ];
+    
+
+    Widget nucleus = Container(
+      padding: EdgeInsets.all(50),
+      child: Container(
+        padding: EdgeInsets.all(50),
+        decoration: BoxDecoration(
+          color: Colors.deepPurpleAccent.withAlpha(50),
+          border: Border.all(width: 10, color: Colors.deepPurple),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: b,
+        ),
+      ),
+    );
+    
+    return Column(
+      children: [
+        Row( children: a, mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start,),
+        nucleus
+      ],
+    );
   }
 
   updateDrawer() {
@@ -536,7 +719,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text("Very SKINteresting"),
       ),
       drawer: Drawer(
         child: ListView(
@@ -544,55 +727,44 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       body: Center(
-        child: InteractiveViewer(
-          panEnabled: true, // Set it to false to prevent panning.
-          boundaryMargin: EdgeInsets.all(80),
-          constrained: true,
-          minScale: 0.5,
-          maxScale: 10,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              width: 2
+            )
+          ),
 
-          child: Container(
-              // height: 100,
-              // width: 100,
-              decoration: BoxDecoration(
-                  border: Border.all(color: Colors.pink, width: 5),
-                borderRadius: BorderRadius.circular(40)
-              ),
-              
-              child: FittedBox(
-                child: Stack(
-                  children: [
-                    Container(
-                      color: Colors.pinkAccent.withAlpha(50),
-                      width: 1000,
-                      height: 1000,
-                    ),
-                    ...enzymes(),
-                    Container(
-                      width: 1000,
-                      height: 1000,
-                      child: Column(
-                        children: [
-                          Expanded(child: Container(),),
-                          Expanded(child: Container(
-                            padding: EdgeInsets.all(50),
-                            child: Container(
-                              child: nuclear(),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.deepPurple, width: 5),
-                                borderRadius: BorderRadius.circular(40)
-                            ),),
-                          ))
-                        ],
-                      ),
-                    )
-                    // CustomPaint(
-                    //   size: Size(1000, 1000),
-                    //   painter: ProfileCardPainter(color: Colors.orange),
-                    // ),
-                  ],
+          child: InteractiveViewer(
+            panEnabled: true, // Set it to false to prevent panning.
+            boundaryMargin: EdgeInsets.all(80),
+            constrained: true,
+            minScale: 0.5,
+            maxScale: 10,
+            clipBehavior: Clip.none,
+            onInteractionStart: _onInteractionStart,
+            onInteractionEnd: (ScaleEndDetails) => {
+              //print(_transformationController.value),
+            },
+            transformationController: _transformationController,
+
+            child: Container(
+
+                decoration: BoxDecoration(
+                    border: Border.all(color: Colors.pink, width: 5),
+                  borderRadius: BorderRadius.circular(40),
+                  color: Colors.pink.withAlpha(50)
                 ),
-              )),
+
+                child: FittedBox(
+                  child: Stack(
+                    children: [
+
+                      enzymes(),
+
+                    ],
+                  ),
+                )),
+          ),
         ),
       ),
 
@@ -637,7 +809,9 @@ class _MyHomePageState extends State<MyHomePage> {
       //       ),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: () => {listDocs()},
+        onPressed: () => {
+          _animateResetInitialize()
+        },
         tooltip: 'Increment',
         child: Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
