@@ -106,57 +106,43 @@ class Protein {
   GlobalKey key;
 }
 
-List<String> mapk = [
-  "Tyrosine Kinase",
-  "PTPNII",
-  "SHP2 SOS",
-  "RAS:HRAS/NRAS/KRAS",
-  "BRAF",
-  "MEK",
-  "ERK",
-];
-
-List<String> mtorpath = ["Tyrosine Kinase", "PI3K", "AKT", "mtor"];
-List<String> antiTor = [
-  "-PI3K",
-  "PTEN Merlin",
-  "-AKT",
-  "Hamartin Tuberin",
-  "-mtor",
-  "Folliculin"
-];
-
-List<String> gprot = [
-  "G-Protein CP:GNAQ/GNAS",
-  "Adenylate Cyclase",
-  "cAMP",
-  "PKA"
-];
-
-List<String> ptchpath = ["SMO", "GLI"];
-List<String> nemo = ["TNF-a", "NEMO", "IkB - NFkB - p50"];
-List<String> antiNemo = ["-NEMO", "CYLD"];
-
-List<String> ptch = ["-SMO", "PTCH"];
-List<String> stopras = ["-RAS", "Neurofibromin", "-BRAF", "Spred1"];
-
 List<List<String>> strings = [
-  gprot,
-  mapk,
-  stopras,
-  mtorpath,
-  antiTor,
-  ptchpath,
-  ptch,
-  nemo,
-  antiNemo,
+  [
+    "G-Protein CP:GNAQ/GNAS",
+    "Adenylate Cyclase",
+    "cAMP",
+    "PKA"
+  ],
+  [
+    "Tyrosine Kinase",
+    "PTPNII",
+    "SHP2 SOS",
+    "RAS:HRAS/NRAS/KRAS",
+    "BRAF",
+    "MEK",
+    "ERK",
+  ],
+  ["Neurofibromin,suppressor,spacer3",  "Spred1,suppressor"],
+  ["Tyrosine Kinase", "PI3K", "AKT", "mtor"],
+  [
+
+    "PTEN Merlin,suppressor,spacer1",
+
+    "Hamartin Tuberin,suppressor",
+
+    "Folliculin,suppressor"
+  ],
+  ["SMO", "GLI"],
+  ["PTCH,suppressor"],
+  ["TNF-a", "NEMO", "IkB - NFkB - p50"],
+  [ "CYLD,suppressor,spacer1"],
   ["Wnt", 'Frizzled', 'beta catenin'],
-  ['-beta catenin', 'APC'],
+  [ 'APC,suppressor,spacer2'],
   ["Cyclins,nuclear", 'Cell Cycle progression'],
   ["-cyclins,nuclear", "BAP, p57, p53, p16"]
 ];
 
-List<Protein> mapkProteins = mapk.map((e) => Protein(e, GlobalKey())).toList();
+
 
 List<List<Protein>> allProteins = [[]];
 
@@ -165,39 +151,40 @@ class ProfileCardPainter extends CustomPainter {
   final Color color;
   @override
   void paint(Canvas canvas, Size size) {
-    allProteins.asMap().forEach((numberOfPath, pathway) {
-      List<Offset> points = [];
-      pathway.asMap().forEach((key, value) {
-        GlobalKey gkey = value.key;
-        final b = (gkey.currentContext.findRenderObject() as RenderBox)
-            .getTransformTo(gkey.currentContext.findRenderObject().parent)
-            .getTranslation();
-        final d = (gkey.currentContext.findRenderObject() as RenderBox).size;
-        var hOffset = 0.0;
-        if (key.isEven) {
-          hOffset = d.height;
-        }
-        Offset box = Offset(b.x + (d.width / 2), b.y + hOffset);
-        points.add(box);
-      });
-      points.asMap().forEach((n, point) {
-        if (n > 0 && n < points.length) {
-          final p1 = point;
-          final p2 = points[n - 1];
-          final paint = Paint()
-            ..color = Colors.pink
-            ..strokeWidth = 4;
-          canvas.drawLine(p1, p2, paint);
-        }
-      });
-      final p1 = Offset(0, 0);
-      final p2 = Offset(500, 500);
-      final paint = Paint()
-        ..color = Colors.pink
-        ..strokeWidth = 4;
-      canvas.drawLine(p1, p2, paint);
-    });
+    // allProteins.asMap().forEach((numberOfPath, pathway) {
+    //   List<Offset> points = [];
+    //   pathway.asMap().forEach((key, value) {
+    //     GlobalKey gkey = value.key;
+    //     final b = (gkey.currentContext.findRenderObject() as RenderBox)
+    //         .getTransformTo(gkey.currentContext.findRenderObject().parent)
+    //         .getTranslation();
+    //     final d = (gkey.currentContext.findRenderObject() as RenderBox).size;
+    //     var hOffset = 0.0;
+    //     if (key.isEven) {
+    //       hOffset = d.height;
+    //     }
+    //     Offset box = Offset(b.x + (d.width / 2), b.y + hOffset);
+    //     points.add(box);
+    //   });
+    //   points.asMap().forEach((n, point) {
+    //     if (n > 0 && n < points.length) {
+    //       final p1 = point;
+    //       final p2 = points[n - 1];
+    //       final paint = Paint()
+    //         ..color = Colors.pink
+    //         ..strokeWidth = 4;
+    //       canvas.drawLine(p1, p2, paint);
+    //     }
+    //   });
+    final p1 = Offset(0, 0);
+    final p2 = Offset(500, 500);
+    final paint = Paint()
+      ..color = Colors.pink
+      ..strokeWidth = 4;
+    canvas.drawLine(p1, p2, paint);
   }
+    // });
+
 
   @override
   bool shouldRepaint(ProfileCardPainter oldDelegate) {
@@ -442,7 +429,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           if (value.name.toUpperCase().contains(disease.gene.toUpperCase())) {
             name = disease.name;
             info = disease.info;
-            print(name + ' {} ' + info + '\\' + disease.gene.toUpperCase());
+            // print(name + ' {} ' + info + '\\' + disease.gene.toUpperCase());
             diseaseState = GestureDetector(
               onTap: () => {_showDialog(context, name, info)},
               child: Container(
@@ -507,7 +494,23 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         });
 
         Widget main = Container();
-        if (true) {
+        String unsplit = value.name;
+        List<String> commas = unsplit.split(',');
+        bool oncoOrNah = true;
+        String title = value.name;
+        if (commas.length > 1) {
+          title = commas[0];
+        }
+        commas.forEach((element) {
+          if (element.toUpperCase().contains("SUPPRESSOR")) {
+            oncoOrNah = false;
+          }
+          if (element.toUpperCase().contains("SPACER")) {
+            double a = double.parse(element.substring(6));
+            colStuff.add(Container(height: 75 * a,));
+          }
+        });
+        if (oncoOrNah) {
           main = Container(
             key: value.key,
             padding: EdgeInsets.all(15),
@@ -516,9 +519,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               color: Colors.lightBlue,
             ),
             child: Text(
-              value.name.contains(':')
-                  ? value.name.substring(0, value.name.indexOf(':'))
-                  : value.name,
+              title.contains(':')
+                  ? title.substring(0, title.indexOf(':'))
+                  : title,
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
           );
@@ -537,13 +540,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   color: Colors.red,
                 ),
                 child: Text(
-                  value.name.contains(':')
-                      ? value.name.substring(0, value.name.indexOf(':'))
-                      : value.name,
+                  title.contains(':')
+                      ? title.substring(0, title.indexOf(':'))
+                      : title,
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
               ),
-              diseaseState
             ],
           );
         }
@@ -553,12 +555,18 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           ),
         ));
         if (key < pathway.length - 1) {
-          colStuff.add(Container(
-            child: Icon(
-              Icons.arrow_downward_outlined,
-              color: Colors.green,
-            ),
-          ));
+          if (oncoOrNah) {
+            colStuff.add(Container(
+              child: Icon(
+                Icons.arrow_downward_outlined,
+                color: Colors.green,
+              ),
+            ));
+          }else{
+            colStuff.add(Container(
+              height: 20,
+            ));
+          }
         }
       });
       Column col = Column(
@@ -679,8 +687,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                             child: Stack(
                               children: [
                                 enzymes(),
+
                               ],
                             ),
+
                           )),
                       Expanded(
                         child: Container(),
