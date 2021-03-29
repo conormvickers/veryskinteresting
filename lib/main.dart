@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:transparent_image/transparent_image.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'dart:math' as math;
+import 'package:dotted_border/dotted_border.dart';
 
 void main() {
   runApp(MyApp());
@@ -58,7 +58,7 @@ class Medication {
 }
 
 List<Medication> allMedications = [
-  Medication("Vismodegib", "SMO", ""),
+  Medication("Vismodegib", "SMO ", ""),
   Medication("Vemurafenib\nDabrafenib", "BRAF", ""),
   Medication("Trametenib", "MEK", "")
 ];
@@ -107,14 +107,9 @@ class Protein {
 }
 
 List<List<String>> strings = [
+  ["G-Protein CP:GNAQ/GNAS,new", "Adenylate Cyclase", "cAMP", "PKA"],
   [
-    "G-Protein CP:GNAQ/GNAS",
-    "Adenylate Cyclase",
-    "cAMP",
-    "PKA"
-  ],
-  [
-    "Tyrosine Kinase",
+    "Tyrosine Kinase,new",
     "PTPNII",
     "SHP2 SOS",
     "RAS:HRAS/NRAS/KRAS",
@@ -122,27 +117,47 @@ List<List<String>> strings = [
     "MEK",
     "ERK",
   ],
-  ["Neurofibromin,suppressor,spacer3",  "Spred1,suppressor"],
-  ["Tyrosine Kinase", "PI3K", "AKT", "mtor"],
+  ["Neurofibromin,suppressor,spacer3", "Spred1,suppressor"],
+  ["Tyrosine Kinase,new", "PI3K", "AKT", "mtor"],
   [
-
     "PTEN Merlin,suppressor,spacer1",
-
     "Hamartin Tuberin,suppressor",
-
     "Folliculin,suppressor"
   ],
-  ["SMO", "GLI"],
+  ["SMO ,new", "GLI"],
   ["PTCH,suppressor"],
-  ["TNF-a", "NEMO", "IkB - NFkB - p50"],
-  [ "CYLD,suppressor,spacer1"],
-  ["Wnt", 'Frizzled', 'beta catenin'],
-  [ 'APC,suppressor,spacer2'],
+  ["TNF-a,new", "NEMO", "IkB - NFkB - p50"],
+  ["CYLD,suppressor,spacer1"],
+  ["Wnt,new", 'Frizzled', 'beta catenin'],
+  ['APC,suppressor,spacer2'],
   ["Cyclins,nuclear", 'Cell Cycle progression'],
-  ["-cyclins,nuclear", "BAP, p57, p53, p16"]
+  ["Slow cycle:p57/p16,suppressor,nuclear", "BAP,nuclear,suppressor"],
+  ["CDKN2A,nuclear", "p14", "MDA2", 'P53,suppressor'],
+  [
+    "Inducers:Cigarrette Smoke/Rifampin/Phenytoin/Phenobarbitol,endo,new",
+    "1A2,font80"
+  ],
+  [
+    "Substrates:Floroquinolones/Macrolides except Azithro/Warfarin/Caffeine,endo,suppressor,spacer1.7"
+  ],
+  ["Inducers:Rifampin/Carbamezapine,endo,new", "2C9,font80"],
+  ["Substrates:Phenytoin/Fluconazole,endo,suppressor,spacer1.5"],
+  ["Inducers:Rifampin/Carbamezapine/Phenytoin,endo,new", "2D6,font80"],
+  [
+    "Substrates:Metoprolol/Terbinafine/SSRI/TCA/Doxepin,endo,suppressor,spacer1.5"
+  ],
+  ["Inducers:Rifampin/Carbamezapine/Phenytoin,endo,new", "3A4,font80"],
+  [
+    "Substrates:Warfarin/Statin/'azole' aintifungals/Antihistamines/Tacrolimus/Cyclosporin,endo,suppressor,spacer1"
+  ],
+  [
+    "Calcium Response,nuclear,new",
+    "CREBBP",
+    "p63",
+    "Telomere Repair",
+    "DNA coils"
+  ]
 ];
-
-
 
 List<List<Protein>> allProteins = [[]];
 
@@ -183,8 +198,7 @@ class ProfileCardPainter extends CustomPainter {
       ..strokeWidth = 4;
     canvas.drawLine(p1, p2, paint);
   }
-    // });
-
+  // });
 
   @override
   bool shouldRepaint(ProfileCardPainter oldDelegate) {
@@ -411,15 +425,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Widget enzymes() {
     List<Widget> a = [];
     List<Widget> b = [];
+    List<Widget> c = [];
 
     allProteins.asMap().forEach((num, pathway) {
-      a.add(Column(
-        children: [
-          Container(
-            width: 100,
-          )
-        ],
-      ));
       List<Widget> colStuff = [];
       pathway.asMap().forEach((key, value) {
         String name = 'No name';
@@ -447,9 +455,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         });
         Widget vs = Container();
         if (value.name.contains(':')) {
+          List<String> commas = value.name.split(',');
+          String name = value.name;
+          if (commas.length > 1) {
+            name = commas[0];
+          }
           List<Widget> vbox = [];
           List<String> variants =
-              value.name.substring(value.name.indexOf(':') + 1).split('/');
+              name.substring(name.indexOf(':') + 1).split('/');
           variants.asMap().forEach((v, variant) {
             vbox.add(Container(
               child: Container(
@@ -501,13 +514,20 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         if (commas.length > 1) {
           title = commas[0];
         }
+        double font;
         commas.forEach((element) {
           if (element.toUpperCase().contains("SUPPRESSOR")) {
             oncoOrNah = false;
           }
+          if (element.toUpperCase().contains("FONT")) {
+            double a = double.parse(element.substring(4));
+            font = a;
+          }
           if (element.toUpperCase().contains("SPACER")) {
             double a = double.parse(element.substring(6));
-            colStuff.add(Container(height: 75 * a,));
+            colStuff.add(Container(
+              height: 75 * a,
+            ));
           }
         });
         if (oncoOrNah) {
@@ -522,7 +542,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               title.contains(':')
                   ? title.substring(0, title.indexOf(':'))
                   : title,
-              style: TextStyle(color: Colors.white, fontSize: 20),
+              style: TextStyle(color: Colors.white, fontSize: font ?? 20),
             ),
           );
         } else {
@@ -551,7 +571,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         }
         colStuff.add(Container(
           child: Row(
-            children: [vs, main, diseaseState, medicationState],
+            children: [main, vs, diseaseState, medicationState],
           ),
         ));
         if (key < pathway.length - 1) {
@@ -562,7 +582,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 color: Colors.green,
               ),
             ));
-          }else{
+          } else {
             colStuff.add(Container(
               height: 20,
             ));
@@ -574,9 +594,27 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: colStuff,
       );
+
       if (pathway[0].name.toUpperCase().contains(",NUCLEAR")) {
+        if (pathway[0].name.toUpperCase().contains(",NEW")) {
+          b.add(Container(
+            width: 100,
+          ));
+        }
         b.add(col);
+      } else if (pathway[0].name.toUpperCase().contains(",ENDO")) {
+        if (pathway[0].name.toUpperCase().contains(",NEW")) {
+          c.add(Container(
+            width: 100,
+          ));
+        }
+        c.add(col);
       } else {
+        if (pathway[0].name.toUpperCase().contains(",NEW")) {
+          a.add(Container(
+            width: 100,
+          ));
+        }
         a.add(col);
       }
     });
@@ -598,6 +636,41 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       ),
     );
 
+    List<Widget> prettyEndo = [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: c,
+      ),
+    ];
+    if (c.length > 2) {
+      prettyEndo = [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: c.sublist(0, c.length ~/ 2),
+        ),
+        Container(
+          height: 100,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: c.sublist(c.length ~/ 2),
+        ),
+      ];
+    }
+    Widget endo = Container(
+      padding: EdgeInsets.all(50),
+      child: DottedBorder(
+        color: Colors.purpleAccent,
+        strokeWidth: 10,
+        dashPattern: [10, 30],
+        child: Column(children: prettyEndo),
+        padding: EdgeInsets.all(50),
+      ),
+    );
+
     return Column(
       children: [
         Row(
@@ -605,7 +678,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
         ),
-        nucleus
+        Row(
+          children: [nucleus, endo],
+        )
       ],
     );
   }
@@ -687,10 +762,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                             child: Stack(
                               children: [
                                 enzymes(),
-
                               ],
                             ),
-
                           )),
                       Expanded(
                         child: Container(),
