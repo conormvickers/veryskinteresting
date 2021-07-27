@@ -10,6 +10,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'dart:math' as math;
 import 'package:dotted_border/dotted_border.dart';
+import 'package:arrow_path/arrow_path.dart';
 
 void main() {
   runApp(MyApp());
@@ -576,12 +577,27 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ));
         if (key < pathway.length - 1) {
           if (oncoOrNah) {
-            colStuff.add(Container(
-              child: Icon(
-                Icons.arrow_downward_outlined,
-                color: Colors.green,
+            colStuff.add(
+              Container(
+                height: 10,
+                width: 100,
               ),
-            ));
+            );
+            colStuff.add(
+              Container(
+                height: 40,
+                width: 100,
+                child: CustomPaint(
+                  painter: ArrowPainter(true),
+                ),
+              ),
+            );
+            colStuff.add(
+              Container(
+                height: 10,
+                width: 100,
+              ),
+            );
           } else {
             colStuff.add(Container(
               height: 20,
@@ -777,46 +793,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ),
       ),
 
-      // _loading
-      //     ? Container(
-      //         child: SpinKitFoldingCube(
-      //           color: Colors.lightBlue,
-      //         ),
-      //       )
-      //     : Center(
-      //         child: InteractiveViewer(
-      //           panEnabled: true, // Set it to false to prevent panning.
-      //           boundaryMargin: EdgeInsets.all(80),
-      //           minScale: 0.5,
-      //           maxScale: 4,
-      //           child: Container(
-      //               width: _image.width,
-      //               height: _image.height,
-      //               child: Stack(
-      //                 children: [
-      //                   //_image,
-      //                   CustomPaint(
-      //                     size: Size.infinite,
-      //                     painter: ProfileCardPainter(color: Colors.orange),
-      //                   ),
-      //                   ...enzymes(),
-      //                   Positioned(
-      //                     left: 400,
-      //                     child: Container(
-      //                       child: PopupMenuButton<String>(
-      //                         itemBuilder: (context) =>
-      //                             [PopupMenuItem(child: Text('a'))],
-      //                       ),
-      //                       width: 100,
-      //                       height: 100,
-      //                       color: Colors.red,
-      //                     ),
-      //                   ),
-      //                 ],
-      //               )),
-      //         ),
-      //       ),
-
       floatingActionButton: FloatingActionButton(
         onPressed: () => {_animateResetInitialize()},
         tooltip: 'Increment',
@@ -824,4 +800,76 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+}
+
+class InhibitPainter extends CustomPainter {
+  InhibitPainter(this.upDown);
+  bool upDown = false;
+  @override
+  void paint(Canvas canvas, Size size) {
+    TextSpan textSpan;
+    TextPainter textPainter;
+    Path path;
+
+    // The arrows usually looks better with rounded caps.
+    Paint paint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 3.0;
+
+    /// Draw a single arrow.s
+    path = Path();
+    if (upDown) {
+      path.moveTo(size.width * 0.5, 0);
+      path.relativeLineTo(size.width * 0.5, size.height);
+    } else {
+      path.moveTo(0, size.height * 0.50);
+      path.relativeLineTo(size.width, size.height * 0.5);
+    }
+
+    path = ArrowPath.make(path: path);
+    canvas.drawPath(path, paint..color = Colors.red);
+  }
+
+  @override
+  bool shouldRepaint(ArrowPainter oldDelegate) => true;
+}
+
+class ArrowPainter extends CustomPainter {
+  ArrowPainter(this.upDown);
+  bool upDown = false;
+  @override
+  void paint(Canvas canvas, Size size) {
+    TextSpan textSpan;
+    TextPainter textPainter;
+    Path path;
+
+    // The arrows usually looks better with rounded caps.
+    Paint paint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 3.0;
+
+    /// Draw a single arrow.s
+    path = Path();
+    if (upDown) {
+      path.moveTo(size.width * 0.5, 0);
+      path.relativeCubicTo(
+          0, 0, size.width * 0.25, size.height / 4, 0, size.height);
+    } else {
+      path.moveTo(0, size.height * 0.50);
+      path.relativeCubicTo(
+          0, 0, size.width * 0.25, size.height / 4, size.width, 0);
+    }
+
+    path = ArrowPath.make(path: path);
+    canvas.drawPath(path, paint..color = Colors.blue);
+  }
+
+  @override
+  bool shouldRepaint(ArrowPainter oldDelegate) => true;
 }
