@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:html';
 import 'package:flutter/gestures.dart';
+import 'package:graphite/core/matrix.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'dart:math' as math;
 import 'package:dotted_border/dotted_border.dart';
 import 'package:arrow_path/arrow_path.dart';
+import 'package:graphite/graphite.dart';
 
 void main() {
   runApp(MyApp());
@@ -701,6 +703,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
+  String presetBasic =
+      '[{"id":"A","next":["B"]},{"id":"B","next":["C","D","E"]},'
+      '{"id":"C","next":["F"]},{"id":"D","next":["J"]},{"id":"E","next":["J"]},'
+      '{"id":"J","next":["I"]},{"id":"I","next":["H"]},{"id":"F","next":["K"]},'
+      '{"id":"K","next":["L"]},{"id":"H","next":["L"]},{"id":"L","next":["P"]},'
+      '{"id":"P","next":["M","N"]},{"id":"M","next":[]},{"id":"N","next":[]}]';
+
   updateDrawer() {
     var listRef = storage.ref().child('/');
     drawerItems = [];
@@ -732,6 +741,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    var list = nodeInputFromJson(presetBasic);
     return Scaffold(
       appBar: AppBar(
         title: Text("Very SKINteresting"),
@@ -778,6 +788,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                             child: Stack(
                               children: [
                                 enzymes(),
+                                Container(
+                                  width: 500,
+                                  height: 500,
+                                  child: DirectGraph(
+                                    list: list,
+                                    cellWidth: 136.0,
+                                    cellPadding: 24.0,
+                                    orientation: MatrixOrientation.Vertical,
+                                  ),
+                                ),
                               ],
                             ),
                           )),
