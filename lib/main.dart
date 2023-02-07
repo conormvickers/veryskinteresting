@@ -45,7 +45,7 @@ class Protein {
   Size size;
   String name;
   String data;
-  CustomPainter type;
+  String type;
   List<List<String>> interactions;
   double zoomLevel;
   bool above;
@@ -85,7 +85,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         Size(80, 80),
         "Glucocorticoid Receptor",
         "Binds ligand in the cytosol then enters nucleas to affect gene transcription.",
-        EnzymePainter(),
+        "enzyme",
         [
           ["Inflammatory Signals", "negative", "2", "2"],
         ],
@@ -100,7 +100,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         Size(40, 40),
         "GC Receptor",
         "Binds ligand in the cytosol then enters nucleas to affect gene transcription.",
-        EnzymePainter(),
+        "enzyme",
         [
           ["IkB", "positive", "2", "2"],
           ["NFkB", "negative", "2", "2"]
@@ -112,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         Size(20, 20),
         "Inflammatory Signals",
         "Many pro-inflammatory signals.",
-        LigandPainter(),
+        "ligand",
         [],
         2,
         false));
@@ -123,7 +123,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         Size(80, 80),
         "Cortisol-Binding Globulin",
         "Typically 90% of protein bound. Free fraction is affected by CBG production. Conditions such as hypothyroidism and liver disease will reduce CBG and increase free fraction. Pregnancy and estrogen therapy will have the oppositae effect.",
-        EnzymePainter(),
+        "enzyme",
         [],
         2,
         false));
@@ -135,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         Size(40, 40),
         "CBG",
         "Typically 90% of protein bound. Free fraction is affected by CBG production. Conditions such as hypothyroidism and liver disease will reduce CBG and increase free fraction. Pregnancy and estrogen therapy will have the oppositae effect.",
-        EnzymePainter(),
+        "enzyme",
         [],
         2,
         true));
@@ -144,7 +144,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         Size(40, 40),
         "CBG",
         "Typically 90% of protein bound. Free fraction is affected by CBG production. Conditions such as hypothyroidism and liver disease will reduce CBG and increase free fraction. Pregnancy and estrogen therapy will have the oppositae effect.",
-        EnzymePainter(),
+        "enzyme",
         [],
         2,
         true));
@@ -153,7 +153,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         Size(10, 10),
         "Glucocorticoid",
         "Antiinflammatory steroid molecule",
-        LigandPainter(),
+        "ligand",
         [],
         2,
         true));
@@ -162,20 +162,20 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         Size(20, 20),
         "Glucocorticoid",
         "Antiinflammatory steroid molecule",
-        LigandPainter(),
+        "ligand",
         [],
         2,
         false));
-    proteins.add(Protein([Offset(16.2, 123.8)], Size(10, 10), "", "",
-        LigandPainter(), [], 2, true));
-    proteins.add(Protein([Offset(125, 13.7)], Size(10, 10), "", "",
-        LigandPainter(), [], 2, true));
+    proteins.add(Protein(
+        [Offset(16.2, 123.8)], Size(10, 10), "", "", "ligand", [], 2, true));
+    proteins.add(Protein(
+        [Offset(125, 13.7)], Size(10, 10), "", "", "ligand", [], 2, true));
     proteins.add(Protein(
         [Offset(444.0, 750.0)],
         Size(20, 10),
         "IkB",
         "Binds to NFkB and inhibits its effects on transcription.",
-        LigandPainter(),
+        "ligand",
         [
           ["NFkB", "negative", "2", "2"]
         ],
@@ -186,7 +186,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         Size(20, 10),
         "NFkB",
         "Produces a wide range of inflammatory cytokines.",
-        LigandPainter(),
+        "ligand",
         [
           ["IL-1", "negative", "2", "2"],
           ["TNFa", "negative", "2", "2"],
@@ -196,9 +196,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         2,
         true));
     proteins.add(Protein([Offset(745.4, 634.4)], Size(10, 10), "IL-1",
-        "inflammatory cytokines.", LigandPainter(), [], 2, true));
+        "inflammatory cytokines.", "ligand", [], 2, true));
     proteins.add(Protein([Offset(745.4, 670.4)], Size(10, 10), "TNFa",
-        "inflammatory cytokines.", LigandPainter(), [], 2, true));
+        "inflammatory cytokines.", "ligand", [], 2, true));
 
     List<int> lengths = proteins.map((e) => e.positions.length).toList();
     maxEnz = lengths.reduce(max) - 1;
@@ -216,7 +216,22 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     list.forEach((element) {
       proteinMaster[element[0]] = element;
     });
-    print(proteinMaster.keys);
+    int columnIndex = 0;
+    proteinMaster.keys.toList().forEach((element) {
+      if (element.length > 1) {
+        proteins.add(Protein(
+            [Offset(200 + (40 * columnIndex.toDouble()), 200)],
+            Size(10, 10),
+            proteinMaster[element]![0],
+            proteinMaster[element]![8],
+            proteinMaster[element]![7],
+            [],
+            0,
+            true));
+        columnIndex++;
+      }
+    });
+    setState(() {});
   }
 
   List<Protein> proteins = [];
@@ -381,7 +396,9 @@ Transports cortisol throughout blood stream.
         curve: Curves.easeInOut,
         child: (zoomOK)
             ? CustomPaint(
-                painter: protein.type,
+                painter: painterShapes.containsKey(protein.type)
+                    ? painterShapes[protein.type]
+                    : LigandPainter(),
                 child: Container(
                   width: protein.size.width,
                   height: protein.size.height,
@@ -391,36 +408,10 @@ Transports cortisol throughout blood stream.
       ));
     });
 
-    // enzymeNames.asMap().forEach((key, value) {
-    //   var top = 0.0;
-    //   var left = 0.0;
-    //   if (enzPosIndex >= enzymeLocations[key].length - 1) {
-    //     top = enzymeLocations[key].last.dy;
-    //     left = enzymeLocations[key].last.dx;
-    //   } else {
-    //     top = enzymeLocations[key][enzPosIndex].dy;
-    //     left = enzymeLocations[key][enzPosIndex].dx;
-    //   }
-
-    //   final size = enzymeSize[key];
-
-    //   rr.add(AnimatedPositioned(
-    //     top: top,
-    //     left: left,
-    //     duration: Duration(milliseconds: 300),
-    //     curve: Curves.easeInOut,
-    //     child: CustomPaint(
-    //       painter: EnzymePainter(),
-    //       child: Container(
-    //         width: size.width,
-    //         height: size.height,
-    //       ),
-    //     ),
-    //   ));
-    // });
-
     return rr;
   }
+
+  final painterShapes = {"ligand": LigandPainter(), "enzyme": EnzymePainter()};
 
   List<Widget> ligands() {
     List<Widget> rr = [];
