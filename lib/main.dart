@@ -40,7 +40,7 @@ class MyHomePage extends StatefulWidget {
 
 class Protein {
   Protein(this.positions, this.size, this.name, this.data, this.type,
-      this.interactions, this.zoomLevel, this.above);
+      this.interactions, this.zoomLevel, this.above, this.key);
   List<Offset> positions;
   Size size;
   String name;
@@ -49,6 +49,7 @@ class Protein {
   List<List<String>> interactions;
   double zoomLevel;
   bool above;
+  GlobalKey key;
 
   Offset getPosition() {
     if (positions.length - 1 <= enzPosIndex) {
@@ -76,162 +77,78 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 400),
     );
 
-    proteins.add(Protein(
-        [
-          Offset(290, 300),
-          Offset(290, 300),
-          Offset(390, 620),
-        ],
-        Size(80, 80),
-        "Glucocorticoid Receptor",
-        "Binds ligand in the cytosol then enters nucleas to affect gene transcription.",
-        "enzyme",
-        [
-          ["Inflammatory Signals", "negative", "2", "2"],
-        ],
-        2,
-        false));
-    proteins.add(Protein(
-        [
-          Offset(300, 300),
-          Offset(300, 300),
-          Offset(400, 620),
-        ],
-        Size(40, 40),
-        "GC Receptor",
-        "Binds ligand in the cytosol then enters nucleas to affect gene transcription.",
-        "enzyme",
-        [
-          ["IkB", "positive", "2", "2"],
-          ["NFkB", "negative", "2", "2"]
-        ],
-        2,
-        true));
-    proteins.add(Protein(
-        [Offset(800, 520)],
-        Size(20, 20),
-        "Inflammatory Signals",
-        "Many pro-inflammatory signals.",
-        "ligand",
-        [],
-        2,
-        false));
-    proteins.add(Protein(
-        [
-          Offset(10, 50),
-        ],
-        Size(80, 80),
-        "Cortisol-Binding Globulin",
-        "Typically 90% of protein bound. Free fraction is affected by CBG production. Conditions such as hypothyroidism and liver disease will reduce CBG and increase free fraction. Pregnancy and estrogen therapy will have the oppositae effect.",
-        "enzyme",
-        [],
-        2,
-        false));
-
-    proteins.add(Protein(
-        [
-          Offset(0, 120),
-        ],
-        Size(40, 40),
-        "CBG",
-        "Typically 90% of protein bound. Free fraction is affected by CBG production. Conditions such as hypothyroidism and liver disease will reduce CBG and increase free fraction. Pregnancy and estrogen therapy will have the oppositae effect.",
-        "enzyme",
-        [],
-        2,
-        true));
-    proteins.add(Protein(
-        [Offset(110, 9.5)],
-        Size(40, 40),
-        "CBG",
-        "Typically 90% of protein bound. Free fraction is affected by CBG production. Conditions such as hypothyroidism and liver disease will reduce CBG and increase free fraction. Pregnancy and estrogen therapy will have the oppositae effect.",
-        "enzyme",
-        [],
-        2,
-        true));
-    proteins.add(Protein(
-        [Offset(37, 54.5), Offset(316.5, 304.0), Offset(414.6, 622.7)],
-        Size(10, 10),
-        "Glucocorticoid",
-        "Antiinflammatory steroid molecule",
-        "ligand",
-        [],
-        2,
-        true));
-    proteins.add(Protein(
-        [Offset(37, 54.5), Offset(316.5, 304.0), Offset(414.6, 622.7)],
-        Size(20, 20),
-        "Glucocorticoid",
-        "Antiinflammatory steroid molecule",
-        "ligand",
-        [],
-        2,
-        false));
-    proteins.add(Protein(
-        [Offset(16.2, 123.8)], Size(10, 10), "", "", "ligand", [], 2, true));
-    proteins.add(Protein(
-        [Offset(125, 13.7)], Size(10, 10), "", "", "ligand", [], 2, true));
-    proteins.add(Protein(
-        [Offset(444.0, 750.0)],
-        Size(20, 10),
-        "IkB",
-        "Binds to NFkB and inhibits its effects on transcription.",
-        "ligand",
-        [
-          ["NFkB", "negative", "2", "2"]
-        ],
-        2,
-        true));
-    proteins.add(Protein(
-        [Offset(500.0, 750.0)],
-        Size(20, 10),
-        "NFkB",
-        "Produces a wide range of inflammatory cytokines.",
-        "ligand",
-        [
-          ["IL-1", "negative", "2", "2"],
-          ["TNFa", "negative", "2", "2"],
-          ["IL-1", "positive", "0", "1"],
-          ["TNFa", "positive", "0", "1"],
-        ],
-        2,
-        true));
-    proteins.add(Protein([Offset(745.4, 634.4)], Size(10, 10), "IL-1",
-        "inflammatory cytokines.", "ligand", [], 2, true));
-    proteins.add(Protein([Offset(745.4, 670.4)], Size(10, 10), "TNFa",
-        "inflammatory cytokines.", "ligand", [], 2, true));
-
-    List<int> lengths = proteins.map((e) => e.positions.length).toList();
-    maxEnz = lengths.reduce(max) - 1;
-
     updateDrawer();
 
     pullProteins();
   }
 
+  List<List<List<Protein>>> pathways = [];
   pullProteins() async {
     final responseRaw = await http.get(Uri.parse(
         "https://script.google.com/macros/s/AKfycbxuRCm1kiDeAXN72ZCQYV1N_eVU2APDramMiPq6Ab2hQlHqEmXOEgZx-jKCKUhy1XC6/exec"));
     final list = jsonDecode(responseRaw.body) as List<dynamic>;
-    Map<String, List<dynamic>> proteinMaster = {};
+    List<dynamic> proteinMaster = [];
     list.forEach((element) {
-      proteinMaster[element[0]] = element;
+      proteinMaster.add(element);
     });
     int columnIndex = 0;
-    proteinMaster.keys.toList().forEach((element) {
-      if (element.length > 1) {
-        proteins.add(Protein(
-            [Offset(200 + (40 * columnIndex.toDouble()), 200)],
-            Size(10, 10),
-            proteinMaster[element]![0],
-            proteinMaster[element]![8],
-            proteinMaster[element]![7],
-            [],
-            0,
-            true));
-        columnIndex++;
+    int rowVar = 0;
+    int rowIndex = 0;
+    int sameRow = 0;
+    pathways = [];
+    proteinMaster.forEach((element) {
+      if (element[0] == "") {
+        pathways.add([]);
+      } else {
+        rowVar = (rowVar + 7) % 25;
+        if (element[0] != "Protein") {
+          if (element[2] == "membrane") {
+            columnIndex++;
+            rowIndex = 0;
+          }
+          List<List<String>> interactions = [];
+          if ((element[4] as String).length > 1) {
+            final afters = (element[4] as String).split(",");
+            final effects = (element[5] as String).split(",");
+            afters.asMap().forEach((num, element) {
+              interactions.add([element.trim(), effects[num].trim(), "0", "0"]);
+            });
+          }
+
+          var name = (element[0] as String).trim();
+          if (name.startsWith("-")) {
+            name = name.substring(1);
+            sameRow = sameRow + 40;
+          } else if (name.startsWith("^")) {
+            name = name.substring(1);
+            sameRow = -60;
+          } else {
+            sameRow = 0;
+            rowIndex++;
+          }
+          var off = Offset(sameRow + 100 * columnIndex.toDouble() + rowVar,
+              60 * rowIndex.toDouble());
+          if (element == "DNA") {
+            off = Offset(400, 780);
+          }
+          double aa = 10;
+          if ((element[8] is int)) {
+            aa = element[8];
+          }
+          final toadd = Protein([off], Size(aa, aa), name, element[9],
+              element[7], interactions, 0, true, GlobalKey());
+          proteins.add(toadd);
+          if ((element[0] as String).startsWith("-")) {
+            pathways.last.last.add(toadd);
+          } else if ((element[0] as String).startsWith("^")) {
+            pathways.last.last.insert(0, toadd);
+          } else {
+            pathways.last.add([toadd]);
+          }
+        }
       }
     });
-    setState(() {});
+    spreadOutProteins();
   }
 
   List<Protein> proteins = [];
@@ -306,8 +223,6 @@ Transports cortisol throughout blood stream.
   Widget nucleus() {
     return AnimatedPositioned(
       duration: Duration(milliseconds: 300),
-      top: 780,
-      left: 400,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -411,7 +326,14 @@ Transports cortisol throughout blood stream.
     return rr;
   }
 
-  final painterShapes = {"ligand": LigandPainter(), "enzyme": EnzymePainter()};
+  final painterShapes = {
+    "ligand": LigandPainter(),
+    "enzyme": EnzymePainter(),
+    "dna": DnaPainter(),
+    "transmembrane": TransMembranePainter(),
+    "surface": SurfacePainter(),
+    "channel": ChannelPainter()
+  };
 
   List<Widget> ligands() {
     List<Widget> rr = [];
@@ -445,15 +367,6 @@ Transports cortisol throughout blood stream.
     return rr;
   }
 
-  // List<List<String>> interactions = [
-  //   ["Glucocorticoid Receptor", "IkB", "positive", "2", "2"],
-  //   ["Glucocorticoid Receptor", "NFkB", "negative", "2", "2"],
-  //   ["IkB", "NFkB", "negative", "2", "2"],
-  //   ["NFkB", "IL-1", "negative", "2", "2"],
-  //   ["NFkB", "TNFa", "negative", "2", "2"],
-  //   ["NFkB", "IL-1", "positive", "0", "1"],
-  //   ["NFkB", "TNFa", "positive", "0", "1"]
-  // ];
   List<Widget> arrows() {
     List<Widget> rr = [];
 
@@ -466,6 +379,7 @@ Transports cortisol throughout blood stream.
     proteins.asMap().forEach((key, protein) {
       if (protein.interactions.length > 0) {
         protein.interactions.asMap().forEach((ikey, ii) {
+          print(ii[0]);
           final bprotein = proteins[allNames.indexOf(ii[0])];
           final stop = bprotein.getPosition();
           final start = protein.getPosition();
@@ -517,82 +431,6 @@ Transports cortisol throughout blood stream.
       }
     });
 
-    // interactions.asMap().forEach((key, value) {
-    //   final a = value[0];
-    //   final b = value[1];
-    //   final c = value[2];
-    //   final si = int.parse(value[3]);
-    //   final sti = int.parse(value[4]);
-
-    //   bool show = false;
-    //   if (enzPosIndex >= si && enzPosIndex <= sti) {
-    //     show = true;
-    //   }
-
-    //   Offset start;
-    //   Size startBuff = Size(0, 0);
-    //   Offset stop;
-    //   Size stopBuff = Size(0, 0);
-
-    //   if (ligandNames.contains(a)) {
-    //     if (enzPosIndex <= ligandLocations[ligandNames.indexOf(a)].length - 1) {
-    //       start = ligandLocations[ligandNames.indexOf(a)][enzPosIndex];
-    //     } else {
-    //       start = ligandLocations[ligandNames.indexOf(a)].last;
-    //     }
-    //     startBuff = ligandSize[ligandNames.indexOf(a)] / 2;
-    //   } else if (enzymeNames.contains(a)) {
-    //     if (enzPosIndex <= enzymeLocations[enzymeNames.indexOf(a)].length - 1) {
-    //       start = enzymeLocations[enzymeNames.indexOf(a)][enzPosIndex];
-    //     } else {
-    //       start = enzymeLocations[enzymeNames.indexOf(a)].last;
-    //     }
-    //     startBuff = enzymeSize[enzymeNames.indexOf(a)] / 2;
-    //   }
-
-    //   if (ligandNames.contains(b)) {
-    //     if (enzPosIndex <= ligandLocations[ligandNames.indexOf(b)].length - 1) {
-    //       stop = ligandLocations[ligandNames.indexOf(b)][enzPosIndex];
-    //     } else {
-    //       stop = ligandLocations[ligandNames.indexOf(b)].last;
-    //     }
-    //     stopBuff = ligandSize[ligandNames.indexOf(b)] / 2;
-    //   } else if (enzymeNames.contains(b)) {
-    //     if (enzPosIndex <= enzymeLocations[enzymeNames.indexOf(b)].length - 1) {
-    //       stop = enzymeLocations[enzymeNames.indexOf(b)][enzPosIndex];
-    //     } else {
-    //       stop = enzymeLocations[enzymeNames.indexOf(b)].last;
-    //     }
-    //     stopBuff = enzymeSize[enzymeNames.indexOf(b)] / 2;
-    //   }
-
-    //   if (c == 'positive') {
-    //     rr.add(AnimatedOpacity(
-    //       opacity: show ? 1 : 0,
-    //       duration: Duration(milliseconds: 300),
-    //       curve: Curves.easeInOut,
-    //       child: CustomPaint(
-    //         painter: ArrowPainter(
-    //             start + Offset(startBuff.width, startBuff.height),
-    //             stop + Offset(stopBuff.width, stopBuff.height)),
-    //         child: Container(),
-    //       ),
-    //     ));
-    //   } else {
-    //     rr.add(AnimatedOpacity(
-    //       opacity: show ? 1 : 0,
-    //       duration: Duration(milliseconds: 300),
-    //       curve: Curves.easeInOut,
-    //       child: CustomPaint(
-    //         painter: InhibitPainter(
-    //             start + Offset(startBuff.width, startBuff.height),
-    //             stop + Offset(stopBuff.width, stopBuff.height)),
-    //         child: Container(),
-    //       ),
-    //     ));
-    //   }
-    // });
-
     return rr;
   }
 
@@ -634,6 +472,57 @@ Transports cortisol throughout blood stream.
   }
 
   bool zoomedInBool = false;
+
+  spreadOutProteins() {
+    double colwidth = 100;
+    var columnIndex = 0;
+    var pathHeight = 600;
+    pathways.forEach((element) {
+      if (element.length > 0) {
+        if (element.length < 3) {
+          pathHeight = 200;
+        } else {
+          pathHeight = 600;
+        }
+
+        final heightPart = pathHeight / element.length;
+        double currHeight = 50;
+
+        element.forEach((proteinRow) {
+          int i = 1;
+          var positions = [];
+          if (proteinRow.length.isEven) {
+            proteinRow.forEach((element) {
+              positions.add(((i) / (proteinRow.length + 1)) * (colwidth));
+
+              i++;
+            });
+          } else {
+            proteinRow.forEach((element) {
+              positions.add(colwidth / 2 +
+                  (i - (proteinRow.length / 2).ceil()) *
+                      (colwidth / 2) /
+                      (proteinRow.length));
+              i++;
+            });
+          }
+          i = 0;
+          proteinRow.forEach((p) {
+            p.positions.first =
+                Offset(positions[i] + columnIndex * colwidth, currHeight);
+            i++;
+
+            if (p.name == "DNA") {
+              p.positions.first = Offset(300, 600);
+            }
+          });
+          currHeight = currHeight + heightPart;
+        });
+        columnIndex++;
+      }
+    });
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -730,8 +619,8 @@ Transports cortisol throughout blood stream.
                           },
                           child: Stack(
                             children: [
-                              cellMembrane(),
-                              nucleus(),
+                              // cellMembrane(),
+                              // nucleus(),
                               ...enzymes(),
                               ...arrows(),
                               ...labels()
@@ -788,65 +677,6 @@ Transports cortisol throughout blood stream.
           ),
         ],
       ),
-
-      // Center(
-      //   child: Column(
-      //     children: [
-      //       Expanded(
-      //         child: Container(
-      //           decoration: BoxDecoration(border: Border.all(width: 2)),
-      //           child: InteractiveViewer(
-      //             panEnabled: true, // Set it to false to prevent panning.
-      //             boundaryMargin: EdgeInsets.all(80),
-      //             constrained: true,
-      //             minScale: 0.5,
-      //             maxScale: 10,
-      //             clipBehavior: Clip.none,
-      //             onInteractionStart: _onInteractionStart,
-      //             onInteractionEnd: (ScaleEndDetails) => {
-      //               //print(_transformationController.value),
-      //             },
-      //             transformationController: _transformationController,
-
-      //             child: Column(
-      //               children: [
-      //                 Container(
-      //                   child: surfaceReceptors(),
-      //                 ),
-      //                 Container(
-      //                     decoration: BoxDecoration(
-      //                         border: Border.all(color: Colors.pink, width: 5),
-      //                         borderRadius: BorderRadius.circular(40),
-      //                         color: Colors.pink.withAlpha(50)),
-      //                     child: FittedBox(
-      //                       fit: BoxFit.fitWidth,
-      //                       child: Stack(
-      //                         children: [
-      //                           enzymes(),
-      //                           Container(
-      //                             width: 500,
-      //                             height: 500,
-      //                             child: DirectGraph(
-      //                               list: list,
-      //                               cellWidth: 136.0,
-      //                               cellPadding: 24.0,
-      //                               orientation: MatrixOrientation.Vertical,
-      //                             ),
-      //                           ),
-      //                         ],
-      //                       ),
-      //                     )),
-      //                 Expanded(
-      //                   child: Container(),
-      //                 ),
-      //               ],
-      //             ),
-      //           ),
-      //         ),
-      //       ),
-      //     ],
-      //   ),
-      // ),
     );
   }
 }
@@ -866,10 +696,16 @@ class InhibitPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round
       ..strokeWidth = 3.0;
 
-    final dx = stop.dx - start.dx;
-    final dy = stop.dy - start.dy;
+    var dx = stop.dx - start.dx;
+    var dy = stop.dy - start.dy;
 
     final angle = math.atan(dy / dx);
+    if (dx == 0) {
+      dx = 1;
+    }
+    if (dy == 0) {
+      dy = 1;
+    }
 
     final sf = Offset(start.dx + 20 * dx.sign * cos(angle),
         start.dy + 20 * dx.sign * sin(angle));
@@ -912,8 +748,15 @@ class ArrowPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round
       ..strokeWidth = 3.0;
 
-    final dx = stop.dx - start.dx;
-    final dy = stop.dy - start.dy;
+    var dx = stop.dx - start.dx;
+    var dy = stop.dy - start.dy;
+
+    if (dx == 0) {
+      dx = 1;
+    }
+    if (dy == 0) {
+      dy = 1;
+    }
 
     final angle = math.atan(dy / dx);
 
@@ -992,6 +835,113 @@ class LigandPainter extends CustomPainter {
 
     canvas.drawArc(Rect.fromLTRB(0, 0, size.width, size.height), 0, 2 * math.pi,
         false, mempaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class TransMembranePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint dnaPaint = Paint()
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 3.0
+      ..color = Colors.greenAccent
+      ..style = PaintingStyle.stroke;
+    final shortside = 20.0;
+    Path dnapath = Path();
+    final longside = 30.0;
+    var xoffset = 0.0;
+    final step = size.width / 4;
+    for (int i = 0; i < 3; i++) {
+      if (i == 0) {
+        dnapath.moveTo(xoffset, 0);
+      } else {
+        dnapath.moveTo(xoffset, size.height * 1 / 6);
+      }
+
+      dnapath.lineTo(0 + xoffset, size.height * 5 / 6);
+      dnapath.addArc(
+          Rect.fromCenter(
+              center:
+                  Offset(xoffset + size.width * 1 / 16, size.height * 5 / 6),
+              width: size.width / 8,
+              height: size.height / 8),
+          pi,
+          -pi);
+      dnapath.moveTo(xoffset + step / 2, size.height * 5 / 6);
+      dnapath.lineTo(xoffset + step / 2, size.height * 1 / 6);
+      dnapath.addArc(
+          Rect.fromCenter(
+              center: Offset(xoffset + size.width * 1 / 16 + step / 2,
+                  size.height * 1 / 6),
+              width: size.width / 8,
+              height: size.height / 8),
+          pi,
+          pi);
+      xoffset = xoffset + step;
+    }
+    dnapath.moveTo(xoffset, size.height * 1 / 6);
+    dnapath.lineTo(0 + xoffset, size.height);
+    canvas.drawPath(dnapath, dnaPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class ChannelPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint dnaPaint = Paint()
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 3.0
+      ..color = Colors.deepOrange
+      ..style = PaintingStyle.stroke;
+
+    Path path = Path();
+    path = Path();
+    final w = size.width;
+    final h = size.height;
+    path.addArc(Rect.fromLTWH(0.3 * w, 0, 0.1 * w, h), 0, 2 * pi);
+    path.addArc(Rect.fromLTWH(0.7 * w, 0, 0.1 * w, h), 0, 2 * pi);
+    canvas.drawPath(path, dnaPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class SurfacePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint dnaPaint = Paint()
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 3.0
+      ..color = Colors.purple
+      ..style = PaintingStyle.stroke;
+
+    Path path = Path();
+    path = Path();
+    final w = size.width;
+    final h = size.height;
+    path.moveTo(0.4 * w, 1 * h);
+    path.lineTo(0.4 * w, 0.2 * h);
+    path.lineTo(0.3 * w, 0);
+    path.moveTo(0.6 * w, 1 * h);
+    path.lineTo(0.6 * w, 0.2 * h);
+    path.lineTo(0.7 * w, 0);
+    canvas.drawPath(path, dnaPaint);
   }
 
   @override
