@@ -39,13 +39,23 @@ class MyHomePage extends StatefulWidget {
 }
 
 class Protein {
-  Protein(this.positions, this.size, this.name, this.data, this.type,
-      this.interactions, this.zoomLevel, this.above, this.key);
+  Protein(
+      this.positions,
+      this.size,
+      this.name,
+      this.data,
+      this.shape,
+      this.celllocation,
+      this.interactions,
+      this.zoomLevel,
+      this.above,
+      this.key);
   List<Offset> positions;
   Size size;
   String name;
   String data;
-  String type;
+  String shape;
+  String celllocation;
   List<List<String>> interactions;
   double zoomLevel;
   bool above;
@@ -69,9 +79,19 @@ String rawDatas = """
 """;
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+  List<Widget> postframeArrows = [];
+
+  AnimationController? animationController;
+  Animation<double>? animation;
+
   @override
   void initState() {
     super.initState();
+    animationController =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1));
+    animation =
+        CurveTween(curve: Curves.fastOutSlowIn).animate(animationController!);
+
     _controllerReset = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -135,8 +155,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           if ((element[8] is int)) {
             aa = element[8];
           }
-          final toadd = Protein([off], Size(aa, aa), name, element[9],
-              element[7], interactions, 0, true, GlobalKey());
+          final toadd = Protein(
+              [off],
+              Size(aa, aa),
+              name,
+              (element[9] as String).trim(),
+              (element[7] as String).trim(),
+              (element[2] as String).trim(),
+              interactions,
+              0,
+              true,
+              GlobalKey());
           proteins.add(toadd);
           if ((element[0] as String).startsWith("-")) {
             pathways.last.last.add(toadd);
@@ -220,110 +249,80 @@ Transports cortisol throughout blood stream.
     );
   }
 
-  Widget nucleus() {
-    return AnimatedPositioned(
-      duration: Duration(milliseconds: 300),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            child: CustomPaint(
-              painter: DnaPainter(),
-              child: Container(),
-            ),
-          ),
-          Text("DNA")
-        ],
-      ),
-    );
-  }
-
-  List<List<Offset>> enzymeLocations = [
-    [
-      Offset(300, 300),
-      Offset(300, 300),
-      Offset(400, 620),
-    ],
-    [
-      Offset(20, 50),
-    ]
-  ];
-  List<List<Offset>> ligandLocations = [
-    [
-      Offset(100, 20),
-      Offset(315, 305),
-      Offset(415, 625),
-    ],
-    [Offset(400, 725)],
-    [Offset(500, 725)],
-    [Offset(800, 745)],
-    [Offset(830, 725)],
-    [
-      Offset(35, 55),
-    ]
-  ];
-  List<String> enzymeNames = [
-    "Glucocorticoid Receptor",
-    "Cortisol-Binding Globulin"
-  ];
-  List<String> ligandNames = [
-    "Glucocorticoid",
-    "IkB",
-    "NFkB",
-    "IL-1",
-    "TNFa",
-    "Glucocorticoid (bound)"
-  ];
-
-  List<Size> ligandSize = [
-    Size(10, 10),
-    Size(30, 30),
-    Size(30, 30),
-    Size(10, 10),
-    Size(10, 10),
-    Size(10, 10),
-    Size(10, 10),
-  ];
-  List<Size> enzymeSize = [
-    Size(40, 40),
-    Size(40, 40),
-    Size(40, 40),
-    Size(40, 40),
-  ];
-
-  List<Widget> enzymes() {
-    List<Widget> rr = [];
-
+  Widget enzymes() {
+    List<Widget> rowsofcols = [];
     final zoom = _transformationController.value[0];
 
-    proteins.forEach((protein) {
-      final top = getSafePosition(protein.positions, enzPosIndex).dy;
-      final left = getSafePosition(protein.positions, enzPosIndex).dx;
-      final zoomOK = (zoom > protein.zoomLevel && protein.above) ||
-          (zoom < protein.zoomLevel && !protein.above);
+    pathways.forEach((rowsofproteins) {
+      List<Widget> rowsforpath = [];
+      rowsofproteins.forEach((proteinlist) {
+        List<Widget> thisrow = [];
+        proteinlist.forEach((protein) {
+          final top = getSafePosition(protein.positions, enzPosIndex).dy;
+          final left = getSafePosition(protein.positions, enzPosIndex).dx;
+          final zoomOK = (zoom > protein.zoomLevel && protein.above) ||
+              (zoom < protein.zoomLevel && !protein.above);
 
-      rr.add(AnimatedPositioned(
-        top: top,
-        left: left,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        child: (zoomOK)
-            ? CustomPaint(
-                painter: painterShapes.containsKey(protein.type)
-                    ? painterShapes[protein.type]
-                    : LigandPainter(),
+          Widget label = Container();
+
+          if (protein.name.length > 0) {
+            label = (AnimatedPositioned(
+              duration: Duration(milliseconds: 300),
+              top: 0,
+              left: 0,
+              child: (zoomOK)
+                  ? Container(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(200),
+                          borderRadius: BorderRadius.circular(15)),
+                      child: Text(protein.name))
+                  : Container(),
+            ));
+          }
+
+          thisrow.add(Stack(
+            children: [
+              Container(
+                padding: EdgeInsets.all(15),
                 child: Container(
-                  width: protein.size.width,
-                  height: protein.size.height,
-                ),
-              )
-            : Container(),
-      ));
-    });
+                  width: 40, height: 40,
+                  // AnimatedPositioned(
+                  // top: top,
+                  // left: left,
+                  //duration: Duration(milliseconds: 300),
+                  // curve: Curves.easeInOut,
 
-    return rr;
+                  key: protein.key,
+
+                  child: (zoomOK)
+                      ? CustomPaint(
+                          painter: painterShapes.containsKey(protein.shape)
+                              ? painterShapes[protein.shape]
+                              : LigandPainter(),
+                          child: Container(
+                            width: protein.size.width,
+                            height: protein.size.height,
+                          ),
+                        )
+                      : Container(),
+                ),
+              ),
+              label
+            ],
+          ));
+        });
+        rowsforpath.add(Row(
+          children: thisrow,
+        ));
+      });
+      rowsofcols
+          .add(Column(mainAxisSize: MainAxisSize.min, children: rowsforpath));
+    });
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: rowsofcols,
+    );
   }
 
   final painterShapes = {
@@ -335,54 +334,28 @@ Transports cortisol throughout blood stream.
     "channel": ChannelPainter()
   };
 
-  List<Widget> ligands() {
-    List<Widget> rr = [];
-
-    ligandNames.asMap().forEach((key, value) {
-      var top = 0.0;
-      var left = 0.0;
-      if (enzPosIndex >= ligandLocations[key].length - 1) {
-        top = ligandLocations[key].last.dy;
-        left = ligandLocations[key].last.dx;
-      } else {
-        top = ligandLocations[key][enzPosIndex].dy;
-        left = ligandLocations[key][enzPosIndex].dx;
-      }
-
-      rr.add(AnimatedPositioned(
-        top: top,
-        left: left,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        child: CustomPaint(
-          painter: LigandPainter(),
-          child: Container(
-            width: ligandSize[key].width,
-            height: ligandSize[key].height,
-          ),
-        ),
-      ));
-    });
-
-    return rr;
-  }
-
   List<Widget> arrows() {
     List<Widget> rr = [];
 
     List<String> allNames = proteins.map((e) => e.name).toList();
-    print(allNames);
 
-    // return rr;
     final zoom = _transformationController.value[0];
+
+    final box = interactiveKey.currentContext!.findRenderObject() as RenderBox;
+    final boxOffset = box.localToGlobal(Offset.zero);
 
     proteins.asMap().forEach((key, protein) {
       if (protein.interactions.length > 0) {
         protein.interactions.asMap().forEach((ikey, ii) {
-          print(ii[0]);
           final bprotein = proteins[allNames.indexOf(ii[0])];
-          final stop = bprotein.getPosition();
-          final start = protein.getPosition();
+
+          final renderBox =
+              protein.key.currentContext!.findRenderObject() as RenderBox;
+          final start = (renderBox.localToGlobal(Offset.zero) - boxOffset);
+
+          final renderBoxb =
+              bprotein.key.currentContext!.findRenderObject() as RenderBox;
+          final stop = (renderBoxb.localToGlobal(Offset.zero) - boxOffset);
 
           final si = int.parse(ii[2]);
           final sti = int.parse(ii[3]);
@@ -397,33 +370,39 @@ Transports cortisol throughout blood stream.
           }
 
           if (ii[1] == 'positive') {
-            rr.add(AnimatedOpacity(
-              opacity: show ? 1 : 0,
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              child: CustomPaint(
-                painter: ArrowPainter(
-                    start +
-                        Offset(protein.size.width / 2, protein.size.height / 2),
-                    stop +
-                        Offset(
-                            bprotein.size.width / 2, bprotein.size.height / 2)),
-                child: Container(),
+            rr.add(IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: show ? 1 : 0,
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: CustomPaint(
+                  painter: ArrowPainter(
+                      start +
+                          Offset(
+                              protein.size.width / 2, protein.size.height / 2),
+                      stop +
+                          Offset(bprotein.size.width / 2,
+                              bprotein.size.height / 2)),
+                  child: Container(),
+                ),
               ),
             ));
           } else {
-            rr.add(AnimatedOpacity(
-              opacity: show ? 1 : 0,
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              child: CustomPaint(
-                painter: InhibitPainter(
-                    start +
-                        Offset(protein.size.width / 2, protein.size.height / 2),
-                    stop +
-                        Offset(
-                            bprotein.size.width / 2, bprotein.size.height / 2)),
-                child: Container(),
+            rr.add(IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: show ? 1 : 0,
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: CustomPaint(
+                  painter: InhibitPainter(
+                      start +
+                          Offset(
+                              protein.size.width / 2, protein.size.height / 2),
+                      stop +
+                          Offset(bprotein.size.width / 2,
+                              bprotein.size.height / 2)),
+                  child: Container(),
+                ),
               ),
             ));
           }
@@ -474,55 +453,77 @@ Transports cortisol throughout blood stream.
   bool zoomedInBool = false;
 
   spreadOutProteins() {
-    double colwidth = 100;
-    var columnIndex = 0;
-    var pathHeight = 600;
-    pathways.forEach((element) {
-      if (element.length > 0) {
-        if (element.length < 3) {
-          pathHeight = 200;
-        } else {
-          pathHeight = 600;
-        }
+    // double colwidth = 100;
+    // var columnIndex = 0;
+    // var pathHeight = 600;
+    // pathways.forEach((element) {
+    //   if (element.length > 0) {
+    //     if (element.length < 3) {
+    //       pathHeight = 200;
+    //     } else {
+    //       pathHeight = 600;
+    //     }
 
-        final heightPart = pathHeight / element.length;
-        double currHeight = 50;
+    //     final heightPart = pathHeight / element.length;
+    //     double currHeight = 90;
 
-        element.forEach((proteinRow) {
-          int i = 1;
-          var positions = [];
-          if (proteinRow.length.isEven) {
-            proteinRow.forEach((element) {
-              positions.add(((i) / (proteinRow.length + 1)) * (colwidth));
+    //     element.forEach((proteinRow) {
+    //       if (proteinRow.first.celllocation == "extracellular") {
+    //         currHeight = 50;
+    //       } else if (proteinRow.first.celllocation == "membrane") {
+    //         currHeight = 90;
+    //       } else if (proteinRow.first.celllocation == "nucleus") {
+    //         currHeight = 850;
+    //       } else {}
 
-              i++;
-            });
-          } else {
-            proteinRow.forEach((element) {
-              positions.add(colwidth / 2 +
-                  (i - (proteinRow.length / 2).ceil()) *
-                      (colwidth / 2) /
-                      (proteinRow.length));
-              i++;
-            });
-          }
-          i = 0;
-          proteinRow.forEach((p) {
-            p.positions.first =
-                Offset(positions[i] + columnIndex * colwidth, currHeight);
-            i++;
+    //       int i = 1;
+    //       var positions = [];
+    //       if (proteinRow.length.isEven) {
+    //         proteinRow.forEach((element) {
+    //           positions.add(((i) / (proteinRow.length + 1)) * (colwidth));
 
-            if (p.name == "DNA") {
-              p.positions.first = Offset(300, 600);
-            }
-          });
-          currHeight = currHeight + heightPart;
-        });
-        columnIndex++;
-      }
-    });
+    //           i++;
+    //         });
+    //       } else {
+    //         proteinRow.forEach((element) {
+    //           positions.add(colwidth / 2 +
+    //               (i - (proteinRow.length / 2).ceil()) *
+    //                   (colwidth / 2) /
+    //                   (proteinRow.length));
+    //           i++;
+    //         });
+    //       }
+    //       i = 0;
+
+    //       proteinRow.forEach((p) {
+    //         var h = currHeight;
+    //         if (p.celllocation != "membrane") {
+    //           h = currHeight + i * 20;
+    //         }
+    //         p.positions.first =
+    //             Offset(positions[i] + columnIndex * colwidth, h);
+    //         i++;
+
+    //         if (p.name == "DNA") {
+    //           p.positions.first = Offset(400, 900);
+    //         }
+    //       });
+
+    //       currHeight = currHeight + heightPart;
+    //     });
+    //     columnIndex++;
+    //   }
+    // });
+
     setState(() {});
+    print("done set state");
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      postframeArrows = arrows();
+      setState(() {});
+    });
   }
+
+  GlobalKey interactiveKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -546,10 +547,8 @@ Transports cortisol throughout blood stream.
               maxScale: 10,
               clipBehavior: Clip.none,
               onInteractionEnd: (details) {
-                print(_transformationController.value[0]);
                 if (!zoomedInBool) {
                   if (_transformationController.value[0] > 2) {
-                    print("zoom changed");
                     zoomedInBool = true;
                     setState(() {});
                   }
@@ -563,69 +562,59 @@ Transports cortisol throughout blood stream.
               transformationController: _transformationController,
               child: Stack(
                 children: [
-                  Column(
-                    children: [Expanded(child: Container())],
-                  ),
-                  Row(
-                    children: [Expanded(child: Container())],
-                  ),
                   Center(
-                    child: FittedBox(
-                      child: Container(
-                        width: 1000,
-                        height: 1000,
-                        child: GestureDetector(
-                          onTapUp: (d) {
-                            print(d.localPosition);
-                            final zoom = _transformationController.value[0];
-                            proteins.asMap().forEach(
-                              (key, protein) {
-                                final zoomOK = (zoom > protein.zoomLevel &&
-                                        protein.above) ||
-                                    (zoom < protein.zoomLevel &&
-                                        !protein.above);
-                                if (zoomOK && protein.data.length > 0) {
-                                  if (d.localPosition.dx >=
-                                          protein.getPosition().dx &&
-                                      d.localPosition.dx <
-                                          protein.getPosition().dx +
-                                              protein.size.width &&
-                                      d.localPosition.dy >=
-                                          protein.getPosition().dy &&
-                                      d.localPosition.dy <
-                                          protein.getPosition().dy +
-                                              protein.size.height) {
-                                    final data = protein.data;
-                                    showMenu(
-                                        context: context,
-                                        position: RelativeRect.fromLTRB(
-                                            d.globalPosition.dx,
-                                            d.globalPosition.dy,
-                                            d.globalPosition.dx,
-                                            d.globalPosition.dy),
-                                        items: [
-                                          PopupMenuItem(
-                                              enabled: false,
-                                              child: Text(
-                                                data,
-                                                style: TextStyle(
-                                                    color: Colors.black),
-                                              ))
-                                        ]);
-                                  }
+                    child: Container(
+                      key: interactiveKey,
+                      child: GestureDetector(
+                        onTapUp: (d) {
+                          final zoom = _transformationController.value[0];
+                          proteins.asMap().forEach(
+                            (key, protein) {
+                              final zoomOK = (zoom > protein.zoomLevel &&
+                                      protein.above) ||
+                                  (zoom < protein.zoomLevel && !protein.above);
+                              if (zoomOK && protein.data.length > 0) {
+                                if (d.localPosition.dx >=
+                                        protein.getPosition().dx &&
+                                    d.localPosition.dx <
+                                        protein.getPosition().dx +
+                                            protein.size.width &&
+                                    d.localPosition.dy >=
+                                        protein.getPosition().dy &&
+                                    d.localPosition.dy <
+                                        protein.getPosition().dy +
+                                            protein.size.height) {
+                                  final data = protein.data;
+                                  showMenu(
+                                      context: context,
+                                      position: RelativeRect.fromLTRB(
+                                          d.globalPosition.dx,
+                                          d.globalPosition.dy,
+                                          d.globalPosition.dx,
+                                          d.globalPosition.dy),
+                                      items: [
+                                        PopupMenuItem(
+                                            enabled: false,
+                                            child: Text(
+                                              data,
+                                              style: TextStyle(
+                                                  color: Colors.black),
+                                            ))
+                                      ]);
                                 }
-                              },
-                            );
-                          },
-                          child: Stack(
-                            children: [
-                              // cellMembrane(),
-                              // nucleus(),
-                              ...enzymes(),
-                              ...arrows(),
-                              ...labels()
-                            ],
-                          ),
+                              }
+                            },
+                          );
+                        },
+                        child: Stack(
+                          children: [
+                            // cellMembrane(),
+                            // nucleus(),
+                            // ...enzymes(),
+                            FittedBox(child: enzymes()),
+                            ...postframeArrows,
+                            // ...labels()
+                          ],
                         ),
                       ),
                     ),
@@ -1009,8 +998,7 @@ class MembranePainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round
       ..strokeWidth = 6.0;
 
-    canvas.drawArc(Rect.fromLTRB(0, 0, size.width, size.height), 0, 2 * math.pi,
-        false, mempaint);
+    canvas.drawLine(Offset(0, 100), Offset(1000, 100), mempaint);
 
     final Paint nuclearPaint = Paint()
       ..color = Colors.deepPurple
@@ -1020,15 +1008,7 @@ class MembranePainter extends CustomPainter {
       ..strokeWidth = 3.0;
 
     final midX = size.width / 2;
-    canvas.drawArc(
-        Rect.fromCenter(
-            center: Offset(size.width / 2, size.height - 300),
-            width: 400,
-            height: 400),
-        0,
-        2 * math.pi,
-        false,
-        nuclearPaint);
+    canvas.drawLine(Offset(0, 800), Offset(1000, 800), nuclearPaint);
   }
 
   @override
