@@ -20,11 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        primaryColor: Colors.grey,
       ),
       home: MyHomePage(),
     );
@@ -103,11 +99,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   List<List<List<Protein>>> pathways = [];
+  List<int> proteinBreaks = [];
   pullProteins() async {
     final responseRaw = await http.get(Uri.parse(
         "https://script.google.com/macros/s/AKfycbxuRCm1kiDeAXN72ZCQYV1N_eVU2APDramMiPq6Ab2hQlHqEmXOEgZx-jKCKUhy1XC6/exec"));
     final list = jsonDecode(responseRaw.body) as List<dynamic>;
     List<dynamic> proteinMaster = [];
+    proteinBreaks = [];
     list.forEach((element) {
       proteinMaster.add(element);
     });
@@ -119,6 +117,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     proteinMaster.forEach((element) {
       if (element[0] == "") {
         pathways.add([]);
+        proteinBreaks.add(proteins.length);
       } else {
         rowVar = (rowVar + 7) % 25;
         if (element[0] != "Protein") {
@@ -167,6 +166,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               true,
               GlobalKey());
           proteins.add(toadd);
+          if (toadd.name == "SUFU") {
+            print("here");
+          }
           if ((element[0] as String).startsWith("-")) {
             pathways.last.last.add(toadd);
           } else if ((element[0] as String).startsWith("^")) {
@@ -249,19 +251,34 @@ Transports cortisol throughout blood stream.
     );
   }
 
+  var zoomPath = 0;
   Widget enzymes() {
-    List<Widget> rowsofcols = [];
-    final zoom = _transformationController.value[0];
+    List<Widget> rowsofareas = [];
 
+    List<Widget> rowsextracell = [];
+    List<Widget> rowmembrane = [];
+    List<Widget> rowcytosol = [];
+    List<Widget> rowdna = [];
+    List<Widget> bottom = [];
+
+    int pathwayIndex = 0;
     pathways.forEach((rowsofproteins) {
-      List<Widget> rowsforpath = [];
+      List<Widget> colsextracell = [];
+      List<Widget> colmembrane = [];
+      List<Widget> colcytosol = [];
+      List<Widget> coldna = [];
+
+      pathwayIndex++;
+      int nnew = pathwayIndex;
+
       rowsofproteins.forEach((proteinlist) {
         List<Widget> thisrow = [];
         proteinlist.forEach((protein) {
           final top = getSafePosition(protein.positions, enzPosIndex).dy;
           final left = getSafePosition(protein.positions, enzPosIndex).dx;
-          final zoomOK = (zoom > protein.zoomLevel && protein.above) ||
-              (zoom < protein.zoomLevel && !protein.above);
+          final zoomOK = true;
+          // (zoom > protein.zoomLevel && protein.above) ||
+          //     (zoom < protein.zoomLevel && !protein.above);
 
           Widget label = Container();
 
@@ -281,48 +298,147 @@ Transports cortisol throughout blood stream.
             ));
           }
 
-          thisrow.add(Stack(
-            children: [
-              Container(
-                padding: EdgeInsets.all(15),
-                child: Container(
-                  width: 40, height: 40,
-                  // AnimatedPositioned(
-                  // top: top,
-                  // left: left,
-                  //duration: Duration(milliseconds: 300),
-                  // curve: Curves.easeInOut,
+          thisrow.add(GestureDetector(
+            onTap: () {
+              setState(() {
+                zoomPath = nnew;
+                print(zoomPath);
+                updateArrows();
+              });
+            },
+            child: Stack(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(15),
+                  child: Container(
+                    // width: protein.size.width,
+                    // height: protein.size.height,
+                    // AnimatedPositioned(
+                    // top: top,
+                    // left: left,
+                    //duration: Duration(milliseconds: 300),
+                    // curve: Curves.easeInOut,
 
-                  key: protein.key,
+                    key: protein.key,
 
-                  child: (zoomOK)
-                      ? CustomPaint(
-                          painter: painterShapes.containsKey(protein.shape)
-                              ? painterShapes[protein.shape]
-                              : LigandPainter(),
-                          child: Container(
-                            width: protein.size.width,
-                            height: protein.size.height,
-                          ),
-                        )
-                      : Container(),
+                    child: (zoomOK)
+                        ? CustomPaint(
+                            painter: painterShapes.containsKey(protein.shape)
+                                ? painterShapes[protein.shape]
+                                : LigandPainter(),
+                            child: Container(
+                              width: protein.size.width,
+                              height: protein.size.height,
+                            ),
+                          )
+                        : Container(),
+                  ),
                 ),
-              ),
-              label
-            ],
+                label
+              ],
+            ),
           ));
         });
-        rowsforpath.add(Row(
-          children: thisrow,
-        ));
+        if (proteinlist.first.name == "DNA") {
+          bottom.add(Row(children: thisrow));
+        } else if (proteinlist.first.celllocation == "extracellular") {
+          colsextracell.add(Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: thisrow,
+          ));
+        } else if (proteinlist.first.celllocation == "membrane") {
+          colmembrane.add(Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: thisrow,
+          ));
+        } else if (proteinlist.first.celllocation == "cytosol") {
+          colcytosol.add(Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: thisrow,
+          ));
+        } else if (proteinlist.first.celllocation == "nucleus") {
+          coldna.add(Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: thisrow,
+          ));
+        }
       });
-      rowsofcols
-          .add(Column(mainAxisSize: MainAxisSize.min, children: rowsforpath));
+      var flexy = 1;
+      if (pathwayIndex == zoomPath) {
+        flexy = 3;
+      }
+      // if (colsextracell.length > 0) {
+      rowsextracell.add(Expanded(
+          flex: flexy,
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.max,
+              children: colsextracell)));
+      // }
+      // if (colmembrane.length > 0) {
+      rowmembrane.add(Expanded(
+          flex: flexy,
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.max,
+              children: colmembrane)));
+      // }
+      // if (colcytosol.length > 0) {
+      rowcytosol.add(Expanded(
+          flex: flexy,
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.max,
+              children: colcytosol)));
+      // }
+      // if (coldna.length > 0) {
+      rowdna.add(Expanded(
+          flex: flexy,
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.max,
+              children: coldna)));
+      // }
     });
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: rowsofcols,
-    );
+    return Column(children: [
+      Expanded(
+          child: Row(mainAxisSize: MainAxisSize.max, children: rowsextracell)),
+      Container(
+          child: Stack(
+        children: [
+          Container(
+            padding: EdgeInsets.only(top: 20),
+            child: Container(
+              decoration:
+                  BoxDecoration(border: Border.all(color: Colors.amber)),
+              height: 5,
+              child: Row(children: [Expanded(child: Container())]),
+            ),
+          ),
+          Row(mainAxisSize: MainAxisSize.max, children: rowmembrane),
+        ],
+      )),
+      Expanded(
+          child: Row(mainAxisSize: MainAxisSize.max, children: rowcytosol)),
+      Expanded(
+        child: Stack(
+          children: [
+            Container(
+              decoration:
+                  BoxDecoration(border: Border.all(color: Colors.deepPurple)),
+              height: 5,
+              child: Row(children: [Expanded(child: Container())]),
+            ),
+            Row(mainAxisSize: MainAxisSize.max, children: rowdna),
+          ],
+        ),
+      ),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: bottom)
+    ]);
   }
 
   final painterShapes = {
@@ -348,6 +464,7 @@ Transports cortisol throughout blood stream.
       if (protein.interactions.length > 0) {
         protein.interactions.asMap().forEach((ikey, ii) {
           final bprotein = proteins[allNames.indexOf(ii[0])];
+          print(protein.name + " to " + bprotein.name);
 
           final renderBox =
               protein.key.currentContext!.findRenderObject() as RenderBox;
@@ -514,9 +631,12 @@ Transports cortisol throughout blood stream.
     //     columnIndex++;
     //   }
     // });
-
+    updateArrows();
     setState(() {});
     print("done set state");
+  }
+
+  updateArrows() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       postframeArrows = arrows();
       setState(() {});
@@ -611,7 +731,7 @@ Transports cortisol throughout blood stream.
                             // cellMembrane(),
                             // nucleus(),
                             // ...enzymes(),
-                            FittedBox(child: enzymes()),
+                            enzymes(),
                             ...postframeArrows,
                             // ...labels()
                           ],
