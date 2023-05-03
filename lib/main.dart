@@ -8,12 +8,12 @@ import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'dart:math' as math;
 import 'package:arrow_path/arrow_path.dart';
 import 'package:http/http.dart' as http;
-
+//flutter build web --web-renderer canvaskit
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatelessWidget {  
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -115,15 +115,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     int sameRow = 0;
     pathways = [];
     proteinMaster.forEach((element) {
-      if (element[0] == "") {
+      if ((element[0] as String).trim() == "") {
         pathways.add([]);
         proteinBreaks.add(proteins.length);
       } else {
         rowVar = (rowVar + 7) % 25;
-        if (element[0] != "Protein") {
+        if (element[0] != "Protein Name") {
           if (element[2] == "membrane") {
-            columnIndex++;
             rowIndex = 0;
+            columnIndex++;
           }
           List<List<String>> interactions = [];
           if ((element[4] as String).length > 1) {
@@ -299,12 +299,38 @@ Transports cortisol throughout blood stream.
           }
 
           thisrow.add(GestureDetector(
-            onTap: () {
-              setState(() {
-                zoomPath = nnew;
-                print(zoomPath);
-                updateArrows();
-              });
+            onTapUp: (dd) {
+              showMenu(
+                context: context,
+                position: RelativeRect.fromLTRB(
+                  dd.globalPosition.dx,
+                  dd.globalPosition.dy,
+                  dd.globalPosition.dx,
+                  dd.globalPosition.dy,
+                ),
+                items: [
+                  PopupMenuItem(
+                    child: Text(protein.data),
+                  ),
+                  PopupMenuItem(
+                    child: zoomPath > 0
+                        ? Text("Show All Proteins")
+                        : Text("Isolate Pathway"),
+                    onTap: () {
+                      setState(() {
+                        if (zoomPath > 0) {
+                          zoomPath = 0;
+                        } else {
+                          zoomPath = nnew;
+                        }
+
+                        print(zoomPath);
+                        updateArrows();
+                      });
+                    },
+                  ),
+                ],
+              );
             },
             child: Stack(
               children: [
@@ -368,41 +394,66 @@ Transports cortisol throughout blood stream.
         }
       });
       var flexy = 1;
-      if (pathwayIndex == zoomPath) {
-        flexy = 3;
+
+      if (zoomPath > 0) {
+        if (zoomPath == pathwayIndex) {
+          rowsextracell.add(Expanded(
+              flex: flexy,
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisSize: MainAxisSize.max,
+                  children: colsextracell)));
+
+          rowmembrane.add(Expanded(
+              flex: flexy,
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisSize: MainAxisSize.max,
+                  children: colmembrane)));
+
+          rowcytosol.add(Expanded(
+              flex: flexy,
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisSize: MainAxisSize.max,
+                  children: colcytosol)));
+
+          rowdna.add(Expanded(
+              flex: flexy,
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisSize: MainAxisSize.max,
+                  children: coldna)));
+        }
+      } else {
+        rowsextracell.add(Expanded(
+            flex: flexy,
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
+                children: colsextracell)));
+
+        rowmembrane.add(Expanded(
+            flex: flexy,
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
+                children: colmembrane)));
+
+        rowcytosol.add(Expanded(
+            flex: flexy,
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
+                children: colcytosol)));
+
+        rowdna.add(Expanded(
+            flex: flexy,
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
+                children: coldna)));
       }
-      // if (colsextracell.length > 0) {
-      rowsextracell.add(Expanded(
-          flex: flexy,
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              mainAxisSize: MainAxisSize.max,
-              children: colsextracell)));
-      // }
-      // if (colmembrane.length > 0) {
-      rowmembrane.add(Expanded(
-          flex: flexy,
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              mainAxisSize: MainAxisSize.max,
-              children: colmembrane)));
-      // }
-      // if (colcytosol.length > 0) {
-      rowcytosol.add(Expanded(
-          flex: flexy,
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              mainAxisSize: MainAxisSize.max,
-              children: colcytosol)));
-      // }
-      // if (coldna.length > 0) {
-      rowdna.add(Expanded(
-          flex: flexy,
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              mainAxisSize: MainAxisSize.max,
-              children: coldna)));
-      // }
     });
     return Column(children: [
       Expanded(
@@ -465,7 +516,9 @@ Transports cortisol throughout blood stream.
         protein.interactions.asMap().forEach((ikey, ii) {
           final bprotein = proteins[allNames.indexOf(ii[0])];
           print(protein.name + " to " + bprotein.name);
-
+          if (protein.key.currentContext == null) {
+            return;
+          }
           final renderBox =
               protein.key.currentContext!.findRenderObject() as RenderBox;
           final start = (renderBox.localToGlobal(Offset.zero) - boxOffset);
