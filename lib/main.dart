@@ -8,12 +8,13 @@ import 'package:vector_math/vector_math_64.dart' show Vector3;
 import 'dart:math' as math;
 import 'package:arrow_path/arrow_path.dart';
 import 'package:http/http.dart' as http;
+
 //flutter build web --web-renderer canvaskit
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {  
+class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -36,43 +37,50 @@ class MyHomePage extends StatefulWidget {
 
 class Protein {
   Protein(
-      this.positions,
+      {this.positions,
       this.size,
-      this.name,
+      required this.name,
       this.data,
       this.shape,
-      this.celllocation,
+      this.location,
       this.interactions,
       this.zoomLevel,
       this.above,
-      this.key);
-  List<Offset> positions;
-  Size size;
+      this.key});
+  List<Offset>? positions;
+  Size? size;
+  String? location;
   String name;
-  String data;
-  String shape;
-  String celllocation;
-  List<List<String>> interactions;
-  double zoomLevel;
-  bool above;
-  GlobalKey key;
+  String? data;
+  String? shape;
+
+  List<List<String>>? interactions;
+  double? zoomLevel;
+  bool? above;
+  GlobalKey? key;
 
   Offset getPosition() {
-    if (positions.length - 1 <= enzPosIndex) {
-      return positions.last;
+    if (positions == null) {
+      return Offset(0, 0);
     }
-    return positions[enzPosIndex];
+    if (positions!.length - 1 <= enzPosIndex) {
+      return positions!.last;
+    }
+    return positions![enzPosIndex];
   }
 }
 
 int enzPosIndex = 0;
 int maxEnz = 0;
 
-String rawDatas = """
-
-[--]
-
-""";
+int nameI = 0;
+int geneI = 1;
+int locationI = 2;
+int descriptionI = 3;
+int downstreamI = 4;
+int effectI = 5;
+int typeI = 7;
+int sizeI = 8;
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   List<Widget> postframeArrows = [];
@@ -104,6 +112,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     final responseRaw = await http.get(Uri.parse(
         "https://script.google.com/macros/s/AKfycbxuRCm1kiDeAXN72ZCQYV1N_eVU2APDramMiPq6Ab2hQlHqEmXOEgZx-jKCKUhy1XC6/exec"));
     final list = jsonDecode(responseRaw.body) as List<dynamic>;
+
+    Map<String, Protein> allProteins = Map<String, Protein>.fromEntries(list
+        .sublist(1)
+        .where((element) => (element[0] as String).length > 0)
+        .map((l) =>
+            MapEntry((l as List)[0] as String, Protein(name: (l as List)[0]))));
     List<dynamic> proteinMaster = [];
     proteinBreaks = [];
     list.forEach((element) {
@@ -115,26 +129,30 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     int sameRow = 0;
     pathways = [];
     proteinMaster.forEach((element) {
-      if ((element[0] as String).trim() == "") {
-        pathways.add([]);
-        proteinBreaks.add(proteins.length);
+      if ((element[nameI] as String).trim() == "") {
+        if (pathways.length > 0) {
+          if (pathways.last.length != 0) {
+            pathways.add([]);
+            proteinBreaks.add(proteins.length);
+          }
+        }
       } else {
         rowVar = (rowVar + 7) % 25;
-        if (element[0] != "Protein Name") {
-          if (element[2] == "membrane") {
+        if (element[nameI] != "Protein Name") {
+          if (element[locationI] == "membrane") {
             rowIndex = 0;
             columnIndex++;
           }
           List<List<String>> interactions = [];
-          if ((element[4] as String).length > 1) {
-            final afters = (element[4] as String).split(",");
-            final effects = (element[5] as String).split(",");
+          if ((element[downstreamI] as String).length > 1) {
+            final afters = (element[downstreamI] as String).split(",");
+            final effects = (element[effectI] as String).split(",");
             afters.asMap().forEach((num, element) {
               interactions.add([element.trim(), effects[num].trim(), "0", "0"]);
             });
           }
 
-          var name = (element[0] as String).trim();
+          var name = (element[nameI] as String).trim();
           if (name.startsWith("-")) {
             name = name.substring(1);
             sameRow = sameRow + 40;
@@ -151,30 +169,33 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             off = Offset(400, 780);
           }
           double aa = 10;
-          if ((element[8] is int)) {
+          if ((element[sizeI] is int)) {
             aa = element[8];
           }
           final toadd = Protein(
-              [off],
-              Size(aa, aa),
-              name,
-              (element[9] as String).trim(),
-              (element[7] as String).trim(),
-              (element[2] as String).trim(),
-              interactions,
-              0,
-              true,
-              GlobalKey());
+              positions: [off],
+              size: Size(aa, aa),
+              name: name,
+              data: (element[descriptionI] as String).trim(),
+              location: (element[locationI] as String).trim(),
+              interactions: interactions,
+              key: GlobalKey());
           proteins.add(toadd);
           if (toadd.name == "SUFU") {
             print("here");
           }
-          if ((element[0] as String).startsWith("-")) {
+          if ((element[nameI] as String).startsWith("-")) {
             pathways.last.last.add(toadd);
-          } else if ((element[0] as String).startsWith("^")) {
+          } else if ((element[nameI] as String).startsWith("^")) {
             pathways.last.last.insert(0, toadd);
           } else {
-            pathways.last.add([toadd]);
+            if (pathways.length > 0) {
+              pathways.last.add([toadd]);
+            } else {
+              pathways.add([
+                [toadd]
+              ]);
+            }
           }
         }
       }
@@ -226,22 +247,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     setState(() {});
   }
 
-  List<List<String>> info = [
-    [
-      "Cortisol-Binding Globulin",
-      """
-Transports cortisol throughout blood stream. 
-      Levels will affect the free fraction of corticosteroids avaliable to exert their effect on cells. 
-      Hypothyroidism, liver disease, renal disease, obesity will all reduce the production of CBG and increase free fraction. 
-      Estrogen therapy, pregnancy, hyperthyroidism will increase CBG and decrease free fraction
-      """
-    ],
-    [
-      "Glucocorticoid Receptor",
-      "Binds ligand in cytosol then transports to nucleus"
-    ]
-  ];
-
   Widget cellMembrane() {
     return Container(
       child: CustomPaint(
@@ -274,8 +279,8 @@ Transports cortisol throughout blood stream.
       rowsofproteins.forEach((proteinlist) {
         List<Widget> thisrow = [];
         proteinlist.forEach((protein) {
-          final top = getSafePosition(protein.positions, enzPosIndex).dy;
-          final left = getSafePosition(protein.positions, enzPosIndex).dx;
+          final top = getSafePosition(protein.positions!, enzPosIndex).dy;
+          final left = getSafePosition(protein.positions!, enzPosIndex).dx;
           final zoomOK = true;
           // (zoom > protein.zoomLevel && protein.above) ||
           //     (zoom < protein.zoomLevel && !protein.above);
@@ -310,7 +315,7 @@ Transports cortisol throughout blood stream.
                 ),
                 items: [
                   PopupMenuItem(
-                    child: Text(protein.data),
+                    child: Text(protein.data!),
                   ),
                   PopupMenuItem(
                     child: zoomPath > 0
@@ -337,8 +342,8 @@ Transports cortisol throughout blood stream.
                 Container(
                   padding: EdgeInsets.all(15),
                   child: Container(
-                    // width: protein.size.width,
-                    // height: protein.size.height,
+                    // width: protein.size!.width,
+                    // height: protein.size!.height,
                     // AnimatedPositioned(
                     // top: top,
                     // left: left,
@@ -353,39 +358,39 @@ Transports cortisol throughout blood stream.
                                 ? painterShapes[protein.shape]
                                 : LigandPainter(),
                             child: Container(
-                              width: protein.size.width,
-                              height: protein.size.height,
+                              width: protein.size!.width,
+                              height: protein.size!.height,
                             ),
                           )
                         : Container(),
                   ),
                 ),
-                label
+                // label
               ],
             ),
           ));
         });
         if (proteinlist.first.name == "DNA") {
           bottom.add(Row(children: thisrow));
-        } else if (proteinlist.first.celllocation == "extracellular") {
+        } else if (proteinlist.first.location == "extracellular") {
           colsextracell.add(Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: thisrow,
           ));
-        } else if (proteinlist.first.celllocation == "membrane") {
+        } else if (proteinlist.first.location == "membrane") {
           colmembrane.add(Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: thisrow,
           ));
-        } else if (proteinlist.first.celllocation == "cytosol") {
+        } else if (proteinlist.first.location == "cytosol") {
           colcytosol.add(Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: thisrow,
           ));
-        } else if (proteinlist.first.celllocation == "nucleus") {
+        } else if (proteinlist.first.location == "nucleus") {
           coldna.add(Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -512,19 +517,19 @@ Transports cortisol throughout blood stream.
     final boxOffset = box.localToGlobal(Offset.zero);
 
     proteins.asMap().forEach((key, protein) {
-      if (protein.interactions.length > 0) {
-        protein.interactions.asMap().forEach((ikey, ii) {
+      if (protein.interactions!.length > 0) {
+        protein.interactions!.asMap().forEach((ikey, ii) {
           final bprotein = proteins[allNames.indexOf(ii[0])];
           print(protein.name + " to " + bprotein.name);
-          if (protein.key.currentContext == null) {
+          if (protein.key!.currentContext == null) {
             return;
           }
           final renderBox =
-              protein.key.currentContext!.findRenderObject() as RenderBox;
+              protein.key!.currentContext!.findRenderObject() as RenderBox;
           final start = (renderBox.localToGlobal(Offset.zero) - boxOffset);
 
           final renderBoxb =
-              bprotein.key.currentContext!.findRenderObject() as RenderBox;
+              bprotein.key!.currentContext!.findRenderObject() as RenderBox;
           final stop = (renderBoxb.localToGlobal(Offset.zero) - boxOffset);
 
           final si = int.parse(ii[2]);
@@ -532,11 +537,7 @@ Transports cortisol throughout blood stream.
 
           bool show = false;
           if (enzPosIndex >= si && enzPosIndex <= sti) {
-            final zoomOK = (zoom > protein.zoomLevel && protein.above) ||
-                (zoom < protein.zoomLevel && !protein.above);
-            if (zoomOK) {
-              show = true;
-            }
+            show = true;
           }
 
           if (ii[1] == 'positive') {
@@ -548,11 +549,11 @@ Transports cortisol throughout blood stream.
                 child: CustomPaint(
                   painter: ArrowPainter(
                       start +
-                          Offset(
-                              protein.size.width / 2, protein.size.height / 2),
+                          Offset(protein.size!.width / 2,
+                              protein.size!.height / 2),
                       stop +
-                          Offset(bprotein.size.width / 2,
-                              bprotein.size.height / 2)),
+                          Offset(bprotein.size!.width / 2,
+                              bprotein.size!.height / 2)),
                   child: Container(),
                 ),
               ),
@@ -566,11 +567,11 @@ Transports cortisol throughout blood stream.
                 child: CustomPaint(
                   painter: InhibitPainter(
                       start +
-                          Offset(
-                              protein.size.width / 2, protein.size.height / 2),
+                          Offset(protein.size!.width / 2,
+                              protein.size!.height / 2),
                       stop +
-                          Offset(bprotein.size.width / 2,
-                              bprotein.size.height / 2)),
+                          Offset(bprotein.size!.width / 2,
+                              bprotein.size!.height / 2)),
                   child: Container(),
                 ),
               ),
@@ -589,14 +590,14 @@ Transports cortisol throughout blood stream.
     final zoom = _transformationController.value[0];
 
     proteins.asMap().forEach((key, protein) {
-      final zoomOK = (zoom > protein.zoomLevel && protein.above) ||
-          (zoom < protein.zoomLevel && !protein.above);
-      final location = getSafePosition(protein.positions, enzPosIndex);
+      final zoomOK = (zoom > protein.zoomLevel! && protein.above!) ||
+          (zoom < protein.zoomLevel! && !protein.above!);
+      final location = getSafePosition(protein.positions!, enzPosIndex);
       final size = protein.size;
       if (protein.name.length > 0) {
         rr.add(AnimatedPositioned(
           duration: Duration(milliseconds: 300),
-          top: location.dy + size.height + 5,
+          top: location.dy + size!.height + 5,
           left: location.dx,
           child: (zoomOK)
               ? Container(
@@ -638,11 +639,11 @@ Transports cortisol throughout blood stream.
     //     double currHeight = 90;
 
     //     element.forEach((proteinRow) {
-    //       if (proteinRow.first.celllocation == "extracellular") {
+    //       if (proteinRow.first.location == "extracellular") {
     //         currHeight = 50;
-    //       } else if (proteinRow.first.celllocation == "membrane") {
+    //       } else if (proteinRow.first.location == "membrane") {
     //         currHeight = 90;
-    //       } else if (proteinRow.first.celllocation == "nucleus") {
+    //       } else if (proteinRow.first.location == "nucleus") {
     //         currHeight = 850;
     //       } else {}
 
@@ -667,7 +668,7 @@ Transports cortisol throughout blood stream.
 
     //       proteinRow.forEach((p) {
     //         var h = currHeight;
-    //         if (p.celllocation != "membrane") {
+    //         if (p.location != "membrane") {
     //           h = currHeight + i * 20;
     //         }
     //         p.positions.first =
@@ -743,20 +744,21 @@ Transports cortisol throughout blood stream.
                           final zoom = _transformationController.value[0];
                           proteins.asMap().forEach(
                             (key, protein) {
-                              final zoomOK = (zoom > protein.zoomLevel &&
-                                      protein.above) ||
-                                  (zoom < protein.zoomLevel && !protein.above);
-                              if (zoomOK && protein.data.length > 0) {
+                              final zoomOK = (zoom > protein.zoomLevel! &&
+                                      protein.above!) ||
+                                  (zoom < protein.zoomLevel! &&
+                                      !protein.above!);
+                              if (zoomOK && protein.data!.length > 0) {
                                 if (d.localPosition.dx >=
                                         protein.getPosition().dx &&
                                     d.localPosition.dx <
                                         protein.getPosition().dx +
-                                            protein.size.width &&
+                                            protein.size!.width &&
                                     d.localPosition.dy >=
                                         protein.getPosition().dy &&
                                     d.localPosition.dy <
                                         protein.getPosition().dy +
-                                            protein.size.height) {
+                                            protein.size!.height) {
                                   final data = protein.data;
                                   showMenu(
                                       context: context,
@@ -769,7 +771,7 @@ Transports cortisol throughout blood stream.
                                         PopupMenuItem(
                                             enabled: false,
                                             child: Text(
-                                              data,
+                                              data!,
                                               style: TextStyle(
                                                   color: Colors.black),
                                             ))
