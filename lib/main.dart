@@ -101,6 +101,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 400),
     );
 
+    _transformationController.addListener(
+      () {
+        setState(() {});
+      },
+    );
+
     updateDrawer();
 
     pullProteins();
@@ -113,11 +119,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         "https://script.google.com/macros/s/AKfycbxuRCm1kiDeAXN72ZCQYV1N_eVU2APDramMiPq6Ab2hQlHqEmXOEgZx-jKCKUhy1XC6/exec"));
     final list = jsonDecode(responseRaw.body) as List<dynamic>;
 
-    Map<String, Protein> allProteins = Map<String, Protein>.fromEntries(list
-        .sublist(1)
-        .where((element) => (element[0] as String).length > 0)
-        .map((l) =>
-            MapEntry((l as List)[0] as String, Protein(name: (l as List)[0]))));
+    // Map<String, Protein> allProteins = Map<String, Protein>.fromEntries(list
+    //     .sublist(1)
+    //     .where((element) => (element[0] as String).length > 0)
+    //     .map((l) =>
+    //         MapEntry((l as List)[0] as String, Protein(name: (l as List)[0]))));
     List<dynamic> proteinMaster = [];
     proteinBreaks = [];
     list.forEach((element) {
@@ -175,6 +181,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           final toadd = Protein(
               positions: [off],
               size: Size(aa, aa),
+              shape: element[typeI],
               name: name,
               data: (element[descriptionI] as String).trim(),
               location: (element[locationI] as String).trim(),
@@ -288,8 +295,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           Widget label = Container();
 
           if (protein.name.length > 0) {
-            label = (AnimatedPositioned(
-              duration: Duration(milliseconds: 300),
+            label = (Positioned(
+              // duration: Duration(milliseconds: 300),
               top: 0,
               left: 0,
               child: (zoomOK)
@@ -303,40 +310,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ));
           }
 
-          thisrow.add(GestureDetector(
-            onTapUp: (dd) {
-              showMenu(
-                context: context,
-                position: RelativeRect.fromLTRB(
-                  dd.globalPosition.dx,
-                  dd.globalPosition.dy,
-                  dd.globalPosition.dx,
-                  dd.globalPosition.dy,
-                ),
-                items: [
-                  PopupMenuItem(
-                    child: Text(protein.data!),
-                  ),
-                  PopupMenuItem(
-                    child: zoomPath > 0
-                        ? Text("Show All Proteins")
-                        : Text("Isolate Pathway"),
-                    onTap: () {
-                      setState(() {
-                        if (zoomPath > 0) {
-                          zoomPath = 0;
-                        } else {
-                          zoomPath = nnew;
-                        }
-
-                        print(zoomPath);
-                        updateArrows();
-                      });
-                    },
-                  ),
-                ],
-              );
-            },
+          thisrow.add(Tooltip(
+            message: protein.data,
             child: Stack(
               children: [
                 Container(
@@ -365,7 +340,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         : Container(),
                   ),
                 ),
-                // label
               ],
             ),
           ));
@@ -398,62 +372,33 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           ));
         }
       });
-      var flexy = 1;
 
-      if (zoomPath > 0) {
-        if (zoomPath == pathwayIndex) {
-          rowsextracell.add(Expanded(
-              flex: flexy,
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  mainAxisSize: MainAxisSize.max,
-                  children: colsextracell)));
-
-          rowmembrane.add(Expanded(
-              flex: flexy,
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  mainAxisSize: MainAxisSize.max,
-                  children: colmembrane)));
-
-          rowcytosol.add(Expanded(
-              flex: flexy,
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  mainAxisSize: MainAxisSize.max,
-                  children: colcytosol)));
-
-          rowdna.add(Expanded(
-              flex: flexy,
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  mainAxisSize: MainAxisSize.max,
-                  children: coldna)));
-        }
-      } else {
-        rowsextracell.add(Expanded(
-            flex: flexy,
+      if (colsextracell.length > 0) {
+        rowsextracell.add(Container(
             child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 mainAxisSize: MainAxisSize.max,
                 children: colsextracell)));
+      }
 
-        rowmembrane.add(Expanded(
-            flex: flexy,
+      if (colmembrane.length > 0) {
+        rowmembrane.add(Container(
             child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 mainAxisSize: MainAxisSize.max,
                 children: colmembrane)));
+      }
 
-        rowcytosol.add(Expanded(
-            flex: flexy,
+      if (colcytosol.length > 0) {
+        rowcytosol.add(Container(
             child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 mainAxisSize: MainAxisSize.max,
                 children: colcytosol)));
+      }
 
-        rowdna.add(Expanded(
-            flex: flexy,
+      if (coldna.length > 0) {
+        rowdna.add(Container(
             child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 mainAxisSize: MainAxisSize.max,
@@ -462,7 +407,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     });
     return Column(children: [
       Expanded(
-          child: Row(mainAxisSize: MainAxisSize.max, children: rowsextracell)),
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.max,
+              children: rowsextracell)),
       Container(
           child: Stack(
         children: [
@@ -472,14 +420,22 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               decoration:
                   BoxDecoration(border: Border.all(color: Colors.amber)),
               height: 5,
-              child: Row(children: [Expanded(child: Container())]),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [Expanded(child: Container())]),
             ),
           ),
-          Row(mainAxisSize: MainAxisSize.max, children: rowmembrane),
+          Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.max,
+              children: rowmembrane),
         ],
       )),
       Expanded(
-          child: Row(mainAxisSize: MainAxisSize.max, children: rowcytosol)),
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.max,
+              children: rowcytosol)),
       Expanded(
         child: Stack(
           children: [
@@ -487,13 +443,18 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               decoration:
                   BoxDecoration(border: Border.all(color: Colors.deepPurple)),
               height: 5,
-              child: Row(children: [Expanded(child: Container())]),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [Expanded(child: Container())]),
             ),
-            Row(mainAxisSize: MainAxisSize.max, children: rowdna),
+            Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
+                children: rowdna),
           ],
         ),
       ),
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: bottom)
+      Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: bottom)
     ]);
   }
 
@@ -513,6 +474,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     final zoom = _transformationController.value[0];
 
+    if (interactiveKey.currentContext == null) {
+      print("no interactive context...");
+      return rr;
+    }
     final box = interactiveKey.currentContext!.findRenderObject() as RenderBox;
     final boxOffset = box.localToGlobal(Offset.zero);
 
@@ -587,27 +552,39 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   List<Widget> labels() {
     List<Widget> rr = [];
 
-    final zoom = _transformationController.value[0];
+    if (bodyKey.currentContext == null) {
+      print("no body context...");
+      return rr;
+    }
+    final box = bodyKey.currentContext!.findRenderObject() as RenderBox;
+    final boxOffset = box.localToGlobal(Offset.zero);
 
     proteins.asMap().forEach((key, protein) {
-      final zoomOK = (zoom > protein.zoomLevel! && protein.above!) ||
-          (zoom < protein.zoomLevel! && !protein.above!);
-      final location = getSafePosition(protein.positions!, enzPosIndex);
-      final size = protein.size;
       if (protein.name.length > 0) {
+        if (protein.key == null) {
+          print("NO KEY " + protein.name);
+          return;
+        }
+        if (protein.key!.currentContext == null) {
+          print("NO CONTEXT " + protein.name);
+          return;
+        }
+        final renderBox =
+            protein.key!.currentContext!.findRenderObject() as RenderBox;
+        final location =
+            renderBox.localToGlobal(Offset(0, -renderBox.size.height / 2));
         rr.add(AnimatedPositioned(
-          duration: Duration(milliseconds: 300),
-          top: location.dy + size!.height + 5,
-          left: location.dx,
-          child: (zoomOK)
-              ? Container(
+            duration: Duration(milliseconds: 100),
+            top: location.dy - boxOffset.dy,
+            left: location.dx,
+            child: IgnorePointer(
+              child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(
                       color: Colors.white.withAlpha(200),
                       borderRadius: BorderRadius.circular(15)),
-                  child: Text(protein.name))
-              : Container(),
-        ));
+                  child: Text(protein.name)),
+            )));
       }
     });
 
@@ -698,6 +675,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   GlobalKey interactiveKey = GlobalKey();
+  GlobalKey bodyKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -711,6 +689,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ),
       ),
       body: Stack(
+        key: bodyKey,
         children: [
           Center(
             child: InteractiveViewer(
@@ -720,19 +699,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               minScale: 0.5,
               maxScale: 10,
               clipBehavior: Clip.none,
-              onInteractionEnd: (details) {
-                if (!zoomedInBool) {
-                  if (_transformationController.value[0] > 2) {
-                    zoomedInBool = true;
-                    setState(() {});
-                  }
-                } else {
-                  if (_transformationController.value[0] < 2) {
-                    zoomedInBool = false;
-                    setState(() {});
-                  }
-                }
-              },
+              // onInteractionUpdate: (details) {
+              //   setState(() {});
+              // },
+              // onInteractionEnd: (details) {
+              //   setState(() {});
+              // },
               transformationController: _transformationController,
               child: Stack(
                 children: [
@@ -788,7 +760,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                             // ...enzymes(),
                             enzymes(),
                             ...postframeArrows,
-                            // ...labels()
                           ],
                         ),
                       ),
@@ -798,6 +769,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               ),
             ),
           ),
+          ...labels(),
           Positioned(
             right: 10,
             bottom: 10,
